@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="author" content="Sam Yang">
+	<title>YangPlayer</title>
+	<link rel="stylesheet" href="YangPlayer.css">
+</head>
+<body>
+	<div class="YangPlayer-container">
+		<video id="YangPlayer" width="600px" height="450px" poster="" preload controls>
+			<source src="http://video.webmfiles.org/big-buck-bunny_trailer.webm" type="video/webm">
+			<source src="#" type="video/mp4">
+			<source src="#" type="video/ogg">
+			<!--Flash插件作为后备方案-->
+			<object width="600px" height="450px" type="application/x-shockware-flash" data="#">
+				<div>你的浏览器未安装flash插件，不支持视频播放！</div>
+			</object>
+		</video>
+		<div class="control">
+			<!--进度条-->
+			<div class="progress">
+				<span class="playedbar"></span>
+			</div>
+			<!--控制按钮-->
+			<div class="btn-control">
+				<div class="main-control">
+					<img src="playbutton.png" class="playbutton">
+ 				</div>
+ 				<div class="volume-control">
+ 					<span class="volumeicon">Volume</span>
+ 					<span class="add">+</span>
+ 					<span class="sub">-</span>
+ 				</div>
+			</div>
+		</div>
+	</div>
+	<script src="YangPlayer.js"></script>
+</body>
+</html>
