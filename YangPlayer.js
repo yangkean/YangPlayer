@@ -5,9 +5,12 @@ var initUI = function() {
 	var playbutton = document.getElementsByClassName("playbutton")[0];
 	var volumeAddButton = document.getElementsByClassName("add")[0];
 	var volumeSubButton = document.getElementsByClassName("sub")[0];
+	var loading = document.getElementsByClassName("loading")[0];
 	var clickBoolean = true;
+	loading.style.display = "block";
 	YangPlayer.removeAttribute("controls");
 	YangPlayer.addEventListener("canplaythrough", function() { 
+		loading.style.display = "none";
 		YangPlayer.play(); // 媒体内容加载完毕时开始流畅播放
 
 		setInterval(function() { // 实时显示播放进度
