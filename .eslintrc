@@ -1,0 +1,29 @@
+{
+  "extends": "airbnb",
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true,
+  },
+  "rules": {
+    "indent": ["error", "tab"],
+    "no-tabs": "off",
+    "quotes": ["warn", "single"],
+    "no-console": "off",
+    "prefer-const": "off",
+    "brace-style": ["error", "stroustrup"],
+    "new-cap": "warn",
+    "no-param-reassign": "warn",
+    "consistent-return": "warn",
+    "keyword-spacing": ["error", {"after": false, "overrides": {"return": {"after": true}}}],
+    "space-before-function-paren": ["error", "never"],
+    "no-trailing-spaces": ["error", {"skipBlankLines": true}],
+    "wrap-iife": ["error", "inside"],
+    "no-shadow": "warn",
+    "func-names": "off",
+    "prefer-rest-params": "off",
+    "no-restricted-syntax": "off",
+    "class-methods-use-this": "warn",
+    "no-floating-decimal": "off",
+  }
+}
