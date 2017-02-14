@@ -1,75 +1,129 @@
 .YangPlayer-container {
-	width: 600px;
-	height: 420px;
-	background-color: #000;
-	margin: 0;
-	padding: 0;
-	position: relative;
+  width: 600px;
+  height: 420px;
+  background-color: #000;
+  margin: 0;
+  padding: 0;
+  position: relative;
 }
 #YangPlayer {
-	width: 100%;
-	height: 100%;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
 }
 .YangPlayer-control {
-	width: 100%;
-	height: 30px;
-	visibility: visible;
-	background-color: yellow;
-	position: absolute;
-	bottom: 0;
-	float: left;
+  width: 100%;
+  height: 30px;
+  visibility: visible;
+  background-color: #eee;
+  position: absolute;
+  bottom: 0;
+  float: left;
 }
 .YangPlayer-play-button,
 .YangPlayer-pause-button {
-	width: 40px;
-	vertical-align: middle;
-	text-align: center;
-	display: inline-block;
-	line-height: 30px;
+  width: 40px;
+  vertical-align: middle;
+  text-align: center;
+  display: inline-block;
+  line-height: 30px;
+  cursor: pointer;
 }
 .YangPlayer-progress {
-	background-color: #99a2aa;
-	border-radius: 5px;
-	width: 350px;
-	height: 8px;
-	line-height: 30px;
-	display: inline-block;
+  background-color: #ddd;
+  border-radius: 5px;
+  width: 350px;
+  height: 8px;
+  line-height: 30px;
+  display: inline-block;
+  cursor: pointer;
+}
+.YangPlayer-playedbar {
+  background-color: #09f;
+  display: block;
+  height: 8px;
+  width: 0;
+  border-radius: 5px;
+  cursor: pointer;
 }
 .YangPlayer-time {
-	display: inline-block;
-	line-height: 30px;
-	font-size: .9em;
-	color: #99a2aa;
-	padding-left: 5px;
+  display: inline-block;
+  line-height: 30px;
+  font-size: .9em;
+  color: #99a2aa;
+  padding-left: 5px;
+}
+.YangPlayer-volume-button {
+  position: relative;
+  cursor: pointer;
 }
 .YangPlayer-volume-up,
 .YangPlayer-volume-down,
 .YangPlayer-volume-off {
-	width: 30px;
-	vertical-align: middle;
-	text-align: center;
-	display: inline-block;
-	line-height: 30px;
+  width: 30px;
+  vertical-align: middle;
+  text-align: center;
+  display: inline-block;
+  line-height: 30px;
+}
+.YangPlayer-volume-change {
+  width: 30px;
+  height: 100px;
+  background-color: #ddd;
+  position: absolute;
+  left: 0;
+  bottom: 30px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  cursor: pointer;
+}
+.YangPlayer-volume-number {
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  font-size: .8em;
+  color: #999;
+}
+.YangPlayer-volume-bar {
+  width: 7px;
+  height: 70px;
+  background-color: #eee;
+  margin: 22px auto 8px;
+  border-radius: 5px;
+  position: relative;
+}
+.YangPlayer-volume-dragButton {
+  width: 14px;
+  height: 14px;
+  background-color: #fff;
+  box-shadow: 0px 0px 5px #09f;
+  border-radius: 7px;
+  position: absolute;
+  left: -3px;
+  top: 0;
+  cursor: pointer;
 }
 .YangPlayer-fullscreen {
-	width: 30px;
-	vertical-align: middle;
-	text-align: center;
-	display: inline-block;
-	line-height: 30px;
+  width: 30px;
+  vertical-align: middle;
+  text-align: center;
+  display: inline-block;
+  line-height: 30px;
+  cursor: pointer;
 }
 .YangPlayer-play-circle {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	margin-top: -40px;
-	margin-left: -40px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-top: -40px;
+  margin-left: -40px;
+  cursor: pointer;
 }
 .YangPlayer-loading {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	margin-top: -40px;
-	margin-left: -40px;
-	color: #99a2aa;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-top: -40px;
+  margin-left: -40px;
+  color: #99a2aa;
 }

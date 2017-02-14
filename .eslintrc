@@ -13,7 +13,7 @@
     "prefer-const": "off",
     "brace-style": ["error", "stroustrup"],
     "new-cap": "warn",
-    "no-param-reassign": "warn",
+    "no-param-reassign": "off",
     "consistent-return": "warn",
     "keyword-spacing": ["error", {"after": false, "overrides": {"return": {"after": true}}}],
     "space-before-function-paren": ["error", "never"],
@@ -25,5 +25,12 @@
     "no-restricted-syntax": "off",
     "class-methods-use-this": "warn",
     "no-floating-decimal": "off",
+    "no-mixed-operators": ["warn", {"allowSamePrecedence": true}],
+    "one-var": ["error", {"uninitialized": "always"}],
+    "one-var-declaration-per-line": ["error", "initializations"],
+    "no-cond-assign": ["error", "except-parens"],
+    "max-len": "off",
+    "no-nested-ternary": "warn",
+    "radix": "off",
   }
 }
