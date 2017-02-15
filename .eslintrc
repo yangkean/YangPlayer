@@ -15,7 +15,7 @@
     "new-cap": "warn",
     "no-param-reassign": "off",
     "consistent-return": "warn",
-    "keyword-spacing": ["error", {"after": false, "overrides": {"return": {"after": true}}}],
+    "keyword-spacing": ["error", {"after": false, "overrides": {"return": {"after": true}, "else": {"after": true} } }],
     "space-before-function-paren": ["error", "never"],
     "no-trailing-spaces": ["error", {"skipBlankLines": true}],
     "wrap-iife": ["error", "inside"],

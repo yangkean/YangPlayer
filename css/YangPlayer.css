@@ -78,19 +78,19 @@
   cursor: pointer;
 }
 .YangPlayer-volume-number {
-  position: absolute;
-  left: 8px;
-  top: 6px;
   font-size: .8em;
   color: #999;
+  text-align: center;
+  padding-top: 6px;
 }
 .YangPlayer-volume-bar {
-  width: 7px;
+  width: 6px;
   height: 70px;
-  background-color: #eee;
-  margin: 22px auto 8px;
+  background-color: #39f;
   border-radius: 5px;
-  position: relative;
+  position: absolute;
+  left: 12px;
+  top: 22px;
 }
 .YangPlayer-volume-dragButton {
   width: 14px;
@@ -99,9 +99,17 @@
   box-shadow: 0px 0px 5px #09f;
   border-radius: 7px;
   position: absolute;
-  left: -3px;
-  top: 0;
+  left: -4px;
+  top: 28px;
   cursor: pointer;
+}
+.YangPlayer-currentVolume-reverseBar {
+  width: 6px;
+  height: 40%;
+  background-color: #eee;
+  display: block;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
 }
 .YangPlayer-fullscreen {
   width: 30px;
