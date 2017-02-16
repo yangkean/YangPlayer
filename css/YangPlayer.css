@@ -18,7 +18,8 @@
   background-color: #eee;
   position: absolute;
   bottom: 0;
-  float: left;
+  left: 0;
+  z-index: 2147483647; /* avoiding the overriding of the user agent(Chrome)’s style sheet when Chrome enters fullscreen mode */
 }
 .YangPlayer-play-button,
 .YangPlayer-pause-button {
@@ -111,7 +112,8 @@
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
 }
-.YangPlayer-fullscreen {
+.YangPlayer-fullscreen,
+.YangPlayer-minscreen {
   width: 30px;
   vertical-align: middle;
   text-align: center;
@@ -126,6 +128,8 @@
   margin-top: -40px;
   margin-left: -40px;
   cursor: pointer;
+  color: #ccc;
+  z-index: 2147483647; /* avoiding the overriding of the user agent(Chrome)’s style sheet when Chrome enters fullscreen mode */
 }
 .YangPlayer-loading {
   position: absolute;
@@ -134,4 +138,9 @@
   margin-top: -40px;
   margin-left: -40px;
   color: #99a2aa;
+  z-index: 2147483647; /* avoiding the overriding of the user agent(Chrome)’s style sheet when Chrome enters fullscreen mode */
+}
+/* remove native controls when Chrome enters the fullscreen mode */
+video::-webkit-media-controls-enclosure {
+  display: none !important;
 }

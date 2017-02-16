@@ -1,6 +1,11 @@
 (function() {
   'use strict';
 
+  // @param {string} selector - a css selector string
+  function $(selector) {
+    return document.querySelector(selector);
+  }
+
   // a utility class containing some utilities
   class Utility {
     // add a class name for a html element
@@ -126,9 +131,9 @@
 
   // an abstract class of some video player states
   class State {
-    // @param {[object YangPlayer]} player
-    constructor(player) {
-      this.player = player;
+    // @param {[object YangPlayer]} playerObject - an object `new` from class `YangPlayer`
+    constructor(playerObject) {
+      this.playerObject = playerObject;
     }
     playButtonWasClicked() {
       throw new Error('父类的 playButtonWasClicked 方法必须被重写！');
@@ -143,32 +148,32 @@
 
   class PlayingState extends State {
     playButtonWasClicked() {
-      this.player.pauseVideo();
+      this.playerObject.pauseVideo();
     }
   }
 
   class PausingState extends State {
     playButtonWasClicked() {
-      this.player.playVideo();
+      this.playerObject.playVideo();
     }
   }
 
   // a class of video player volume
   class Volume {
-    // @param {[object YangPlayer]} player
+    // @param {[object HTMLElement]} player
     constructor(player) {
       this.player = player;
-      this.volumeButton = document.querySelector('.YangPlayer-volume-button');
-      this.volumeUpButton = document.querySelector('.YangPlayer-volume-up');
-      this.volumeDownButton = document.querySelector('.YangPlayer-volume-down');
-      this.volumeOffButton = document.querySelector('.YangPlayer-volume-off');
-      this.volumeChangeRect = document.querySelector('.YangPlayer-volume-change');
-      this.volumeNumber = document.querySelector('.YangPlayer-volume-number');
+      this.volumeButton = $('.YangPlayer-volume-button');
+      this.volumeUpButton = $('.YangPlayer-volume-up');
+      this.volumeDownButton = $('.YangPlayer-volume-down');
+      this.volumeOffButton = $('.YangPlayer-volume-off');
+      this.volumeChangeRect = $('.YangPlayer-volume-change');
+      this.volumeNumber = $('.YangPlayer-volume-number');
       this.volumeNumberValue = 50; // relative to 100(1 - 100), default: 50
       this.realVolumeValue = 0.5; // relative to 1(0.01 - 1.00), default: 0.5
-      this.volumeBar = document.querySelector('.YangPlayer-volume-bar');
-      this.volumeDragButton = document.querySelector('.YangPlayer-volume-dragButton');
-      this.currentVolumeReverseBar = document.querySelector('.YangPlayer-currentVolume-reverseBar');
+      this.volumeBar = $('.YangPlayer-volume-bar');
+      this.volumeDragButton = $('.YangPlayer-volume-dragButton');
+      this.currentVolumeReverseBar = $('.YangPlayer-currentVolume-reverseBar');
       this.currentVolumeBarH = null; // the height from the bottom of volumeDragButton to the bottom of volumeBar
       this.mouseYMax = null; // max currentVolumeBarH or mouse max y offset(px) relative to volumeBar when volume is min
     }
@@ -198,7 +203,7 @@
           Utility.offset({
             top: adjustMouseY,
             left: volumeDragButtonX,
-          }, document.querySelector('.draggable'));
+          }, $('.draggable'));
 
           // change real volume adcording to volumeDragButton
           this.currentVolumeBarH = Utility.outerHeight(this.volumeBar) - adjustMouseY - Utility.outerHeight(this.volumeDragButton);
@@ -274,16 +279,29 @@
 
   // a class of video player progress bar
   class ProgressBar {
-    // @param {[object YangPlayer]} player
+    // @param {[object HTMLElement]} player
     constructor(player) {
       this.player = player;
-      this.progressBar = document.querySelector('.YangPlayer-playedbar');
-      this.playedTime = document.querySelector('.YangPlayer-played-time');
-      this.totalTime = document.querySelector('.YangPlayer-total-time');
+      this.progressBar = $('.YangPlayer-playedbar');
+      this.playedTime = $('.YangPlayer-played-time');
+      this.totalTime = $('.YangPlayer-total-time');
     }
 
     init() {
+      ProgressBar.setProgressLength();
       this.progressBarDisplay();
+    }
+
+    // set the percent width of the progress bar
+    static setProgressLength() {
+      let controlsLength = Utility.outerWidth($('#YangPlayer'));
+      let playBtnLength = Utility.outerWidth($('.YangPlayer-controlPlay-button'));
+      let timeBarLength = Utility.outerWidth($('.YangPlayer-time'));
+      let volumeBtnLength = Utility.outerWidth($('.YangPlayer-volume-button'));
+      let screenModeLength = Utility.outerWidth($('.YangPlayer-screen-mode'));
+      let progressLength = controlsLength - playBtnLength - timeBarLength - volumeBtnLength - screenModeLength - 20;
+
+      $('.YangPlayer-progress').style.width = `${progressLength / controlsLength * 100}%`;
     }
 
     progressBarDisplay() {
@@ -320,7 +338,12 @@
 
   // a class controling the mode of video player screen
   class ScreenMode {
-    constructor() {
+    // @param {[object HTMLElement]} player
+    constructor(player) {
+      this.player = player;
+      this.screenModeButton = $('.YangPlayer-screen-mode');
+      this.fullscreenButton = $('.YangPlayer-fullscreen');
+      this.minscreenButton = $('.YangPlayer-minscreen');
       this.fullscreenElement = null;
       this.isFullscreen = false;
       this.fullscreenEnabled = false;
@@ -328,9 +351,26 @@
 
     init() {
       if(ScreenMode.getBrowserSupportObj()) {
+        // make these properties function in order to get their real-time values
         this.fullscreenElement = () => document[ScreenMode.getBrowserSupportObj().fullscreenElement];
-        this.isFullscreen = () => Boolean(this.fullscreenElement);
+        this.isFullscreen = () => Boolean(this.fullscreenElement());
         this.fullscreenEnabled = () => document[ScreenMode.getBrowserSupportObj().fullscreenEnabled];
+
+        this.screenModeButton.onclick = () => {
+          this.toggle(this.player)
+            .then(
+              function fullfilled(val) {
+                // invalid: `ProgressBar.setProgressLength();`
+                setTimeout(() => ProgressBar.setProgressLength(), 100);
+              },
+              function rejected(err) {
+                throw new Error(err);
+              }
+            )
+            .catch(function(err) {
+              throw new Error(err);
+            });
+        };
       }
       else {
         throw new Error('Current browser don\'t support Fullscreen API!');
@@ -403,33 +443,42 @@
       if(ScreenMode.getBrowserSupportObj()) {
         let request = ScreenMode.getBrowserSupportObj().requestFullscreen;
 
-        element[request]();
+        this.fullscreenButton.style.display = 'none';
+        this.minscreenButton.style.display = 'inline-block';
+        element[request](); // requestFullscreen() method issues an `asynchronous` request to make the element be displayed full-screen
+
+        // latest version of Chrome(56)/ Firefox(51) / Safari(10) not return a Promise in Fullscreen API
+        // invalid: `return element[request]();`
+        return Promise.resolve();
       }
-      else {
-        throw new Error('Current browser don\'t support Fullscreen API!');
-      }
+
+      throw new Error('Current browser don\'t support Fullscreen API!');
     }
 
     exitFullscreen() {
       if(ScreenMode.getBrowserSupportObj()) {
         let exit = ScreenMode.getBrowserSupportObj().exitFullscreen;
 
-        document[exit]();
+        this.fullscreenButton.style.display = 'inline-block';
+        this.minscreenButton.style.display = 'none';
+        document[exit](); // async
+
+        // latest version of Chrome(56)/ Firefox(51) / Safari(10) not return a Promise in Fullscreen API
+        // invalid: `return document[exit]();`
+        return Promise.resolve();
       }
-      else {
-        throw new Error('Current browser don\'t support Fullscreen API!');
-      }
+      
+      throw new Error('Current browser don\'t support Fullscreen API!');
     }
 
     // toggle fullscreen mode
     // @param {[object HTMLElement]} element
     toggle(element) {
-      if(this.isFullscreen) {
-        this.exitFullscreen();
+      if(this.isFullscreen()) {
+        return Promise.resolve(this.exitFullscreen());
       }
-      else {
-        this.requestFullscreen(element);
-      }
+      
+      return Promise.resolve(this.requestFullscreen(element));
     }
   }
 
@@ -442,19 +491,20 @@
       this.pausingState = new PausingState(this);
 
       // some important properties about YangPlayer video player
-      this.YangPlayer = document.querySelector('#YangPlayer');
-      this.playButton = document.querySelector('.YangPlayer-play-button');
-      this.pauseButton = document.querySelector('.YangPlayer-pause-button');
-      this.playCircle = document.querySelector('.YangPlayer-play-circle');
-      this.playLoading = document.querySelector('.YangPlayer-loading');
-      this.controlPlayButton = document.querySelector('.YangPlayer-controlPlay-button');
+      this.YangPlayer = $('#YangPlayer');
+      this.playButton = $('.YangPlayer-play-button');
+      this.pauseButton = $('.YangPlayer-pause-button');
+      this.playCircle = $('.YangPlayer-play-circle');
+      this.playLoading = $('.YangPlayer-loading');
+      this.controlPlayButton = $('.YangPlayer-controlPlay-button');
       this.playerState = null;
       this.volumeButton = null; // the button control volume in control bar
       this.progressBar = null; // the progress bar and its time bar
+      this.screenMode = null; // the button controling fullscreen and minscreen
     }
 
     init() {
-      this.YangPlayer.removeAttribute('controls');
+      this.YangPlayer.removeAttribute('controls'); // remove native browser controls
 
       // initialize volume button
       this.volumeButton = new Volume(this.YangPlayer);
@@ -464,9 +514,13 @@
       this.progressBar = new ProgressBar(this.YangPlayer);
       this.progressBar.init();
 
+      // initialize screen mode button
+      this.screenMode = new ScreenMode(this.YangPlayer);
+      this.screenMode.init();
+
       this.YangPlayer.oncanplaythrough = () => {
         this.playLoading.style.display = 'none';
-        this.YangPlayer.style.opacity = .6;
+        this.YangPlayer.style.opacity = .5;
         this.playCircle.style.display = 'block';
         this.setPlayerState(this.pausingState);
 
@@ -507,7 +561,7 @@
 
       this.pauseButton.style.display = 'none';
       this.playButton.style.display = 'inline-block';
-      this.YangPlayer.style.opacity = .6;
+      this.YangPlayer.style.opacity = .5;
       this.playCircle.style.display = 'block';
       this.setPlayerState(this.pausingState);
     }
