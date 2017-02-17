@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  // @param {string} selector - a css selector string
+  // @param {string} selector - a CSS selector string
   function $(selector) {
     return document.querySelector(selector);
   }
@@ -155,6 +155,79 @@
   class PausingState extends State {
     playButtonWasClicked() {
       this.playerObject.playVideo();
+    }
+  }
+
+  // a class of control-play button
+  class ControlPlayBtn {
+    // @param {[object HTMLElement]} player
+    constructor(player) {
+      // current possible states of video player
+      this.loadingState = new LoadingState(this);
+      this.playingState = new PlayingState(this);
+      this.pausingState = new PausingState(this);
+
+      this.player = player;
+      this.playButton = $('.YangPlayer-play-button');
+      this.pauseButton = $('.YangPlayer-pause-button');
+      this.playCircle = $('.YangPlayer-play-circle');
+      this.playLoading = $('.YangPlayer-loading');
+      this.controlPlayButton = $('.YangPlayer-controlPlay-button');
+      this.playerState = null;
+    }
+
+    init() {
+      this.player.oncanplaythrough = () => {
+        this.playLoading.style.display = 'none';
+        this.player.style.opacity = .5;
+        this.playCircle.style.display = 'block';
+        this.setPlayerState(this.pausingState);
+
+        this.controlPlayButton.onclick = () => {
+          this.playerState.playButtonWasClicked();
+        };
+
+        this.player.onclick = () => {
+          this.playerState.playButtonWasClicked();
+        };
+
+        this.playCircle.onclick = () => {
+          this.playerState.playButtonWasClicked();
+        };
+
+        document.onkeydown = (event) => {
+          let keyCode = event.which || event.keyCode;
+          
+          if(keyCode === 32) { // the Unicode vaule of `Space`
+            this.playerState.playButtonWasClicked();
+          }
+        };
+      };
+    }
+
+    playVideo() {
+      this.player.play();
+
+      this.playButton.style.display = 'none';
+      this.pauseButton.style.display = 'inline-block';
+      this.player.style.opacity = 1;
+      this.playCircle.style.display = 'none';
+      this.setPlayerState(this.playingState);
+    }
+
+    pauseVideo() {
+      this.player.pause();
+
+      this.pauseButton.style.display = 'none';
+      this.playButton.style.display = 'inline-block';
+      this.player.style.opacity = .5;
+      this.playCircle.style.display = 'block';
+      this.setPlayerState(this.pausingState);
+    }
+    
+    // @param {[object State]} playerState - the state of video player
+    setPlayerState(playerState) {
+      this.playerState = playerState;
     }
   }
 
@@ -341,6 +414,9 @@
     // @param {[object HTMLElement]} player
     constructor(player) {
       this.player = player;
+      this.controlBar = $('.YangPlayer-control');
+      this.timeoutId = null;
+      this.controlBarBox = $('.YangPlayer-control-box');
       this.screenModeButton = $('.YangPlayer-screen-mode');
       this.fullscreenButton = $('.YangPlayer-fullscreen');
       this.minscreenButton = $('.YangPlayer-minscreen');
@@ -357,23 +433,34 @@
         this.fullscreenEnabled = () => document[ScreenMode.getBrowserSupportObj().fullscreenEnabled];
 
         this.screenModeButton.onclick = () => {
-          this.toggle(this.player)
-            .then(
-              function fullfilled(val) {
-                // invalid: `ProgressBar.setProgressLength();`
-                setTimeout(() => ProgressBar.setProgressLength(), 100);
-              },
-              function rejected(err) {
-                throw new Error(err);
-              }
-            )
-            .catch(function(err) {
-              throw new Error(err);
-            });
+          // compatible with the different implementations of the Gecko and WebKit Fullscreen API
+          //        => Gecko: only stretch element to fill the screen and siblings are still placed relative to fullscreen element ancestor and will be overrided by fullscreen element(z-index setting is invalid)
+          //        => Webkit: stretch element but siblings seems to be placed relative to fullscreen element
+          let fullscreenElement = document.mozCancelFullScreen ? $('.YangPlayer-container') : this.player;
+
+          this.toggle(fullscreenElement);
+            // .then(
+            //   function fullfilled(val) {
+            //     // invalid: `ProgressBar.setProgressLength();`
+            //     // setTimeout(() => ProgressBar.setProgressLength(), 100);
+            //   },
+            //   function rejected(err) {
+            //     throw new Error(err);
+            //   }
+            // )
+            // .catch(function(err) {
+            //   throw new Error(err);
+            // });
+
+          // refresh progress bar when the fullscreen state of the page changes (because of `ESC`)
+          this.onfullscreenchange(ProgressBar.setProgressLength);
+
+          // refresh progress bar when DevTool is opened and resized
+          window.onresize = ProgressBar.setProgressLength;
         };
       }
       else {
-        throw new Error('Current browser don\'t support Fullscreen API!');
+        throw new Error('Current browser doesn\'t support Fullscreen API!');
       }
     }
 
@@ -438,6 +525,55 @@
       return false;
     }
 
+    // trigger callback when the fullscreen state of the page changes
+    // @param {function} callback
+    onfullscreenchange(callback) {
+      if(ScreenMode.getBrowserSupportObj()) {
+        let change = ScreenMode.getBrowserSupportObj().onfullscreenchange;
+        let callbackAdd = () => {
+          callback();
+
+          this.notOverControlBar();
+        };
+
+        return (document[change] = callbackAdd);
+      }
+
+      throw new Error('Current browser doesn\'t support Fullscreen API!');
+    }
+
+    // bottom control bar disappears when cursor isn's over it in fullscreen mode
+    notOverControlBar() {
+      if(!this.isFullscreen()) {
+        this.fullscreenButton.style.display = 'inline-block';
+        this.minscreenButton.style.display = 'none';
+
+        this.controlBar.onmouseenter = null;
+        this.controlBarBox.onmouseenter = null;
+        this.controlBar.onmouseleave = null;
+        clearTimeout(this.timeoutId); // avoid the impact of the remaining timer
+        this.controlBar.style.visibility = 'visible';
+      }
+      else {
+        this.fullscreenButton.style.display = 'none';
+        this.minscreenButton.style.display = 'inline-block';
+
+        this.controlBar.onmouseleave = () => {
+          this.timeoutId = setTimeout(() => {
+            this.controlBar.style.visibility = 'hidden';
+          }, 3000);
+        };
+
+        this.controlBarBox.onmouseenter = () => {
+          this.controlBar.style.visibility = 'visible';
+        };
+
+        this.controlBar.onmouseenter = () => {
+          clearTimeout(this.timeoutId);
+        };
+      }
+    }
+
     // @param {[object HTMLElement]} element
     requestFullscreen(element = document.documentElement) {
       if(ScreenMode.getBrowserSupportObj()) {
@@ -445,14 +581,15 @@
 
         this.fullscreenButton.style.display = 'none';
         this.minscreenButton.style.display = 'inline-block';
-        element[request](); // requestFullscreen() method issues an `asynchronous` request to make the element be displayed full-screen
+
+        return element[request](); // requestFullscreen() method issues an `asynchronous` request to make the element be displayed full-screen
 
         // latest version of Chrome(56)/ Firefox(51) / Safari(10) not return a Promise in Fullscreen API
         // invalid: `return element[request]();`
-        return Promise.resolve();
+        // return Promise.resolve();
       }
 
-      throw new Error('Current browser don\'t support Fullscreen API!');
+      throw new Error('Current browser doesn\'t support Fullscreen API!');
     }
 
     exitFullscreen() {
@@ -461,114 +598,67 @@
 
         this.fullscreenButton.style.display = 'inline-block';
         this.minscreenButton.style.display = 'none';
-        document[exit](); // async
+        return document[exit](); // async
 
         // latest version of Chrome(56)/ Firefox(51) / Safari(10) not return a Promise in Fullscreen API
         // invalid: `return document[exit]();`
-        return Promise.resolve();
+        // return Promise.resolve();
       }
       
-      throw new Error('Current browser don\'t support Fullscreen API!');
+      throw new Error('Current browser doesn\'t support Fullscreen API!');
     }
 
     // toggle fullscreen mode
     // @param {[object HTMLElement]} element
     toggle(element) {
       if(this.isFullscreen()) {
-        return Promise.resolve(this.exitFullscreen());
+        // return Promise.resolve(this.exitFullscreen());
+        return this.exitFullscreen();
       }
-      
-      return Promise.resolve(this.requestFullscreen(element));
+
+      // return Promise.resolve(this.requestFullscreen(element));
+      return this.requestFullscreen(element);
+    }
+  }
+
+  // a class control `bullet screen`
+  class BulletScreen {
+    constructor() {
+      // todo
+    }
+
+    init() {
+      // todo
     }
   }
 
   // main class of YangPlayer video player
   class YangPlayer {
     constructor() {
-      // current possible states of video player
-      this.loadingState = new LoadingState(this);
-      this.playingState = new PlayingState(this);
-      this.pausingState = new PausingState(this);
-
       // some important properties about YangPlayer video player
       this.YangPlayer = $('#YangPlayer');
-      this.playButton = $('.YangPlayer-play-button');
-      this.pauseButton = $('.YangPlayer-pause-button');
-      this.playCircle = $('.YangPlayer-play-circle');
-      this.playLoading = $('.YangPlayer-loading');
-      this.controlPlayButton = $('.YangPlayer-controlPlay-button');
-      this.playerState = null;
+      this.controlPlay = null; // the button control playing and pausing
       this.volumeButton = null; // the button control volume in control bar
       this.progressBar = null; // the progress bar and its time bar
       this.screenMode = null; // the button controling fullscreen and minscreen
     }
 
     init() {
-      this.YangPlayer.removeAttribute('controls'); // remove native browser controls
-
-      // initialize volume button
-      this.volumeButton = new Volume(this.YangPlayer);
-      this.volumeButton.init();
+      // initialize control-play button and related loading img and pausing play-circle
+      this.controlPlay = new ControlPlayBtn(this.YangPlayer);
+      this.controlPlay.init();
 
       // initialize progress bar
       this.progressBar = new ProgressBar(this.YangPlayer);
       this.progressBar.init();
 
+      // initialize volume button
+      this.volumeButton = new Volume(this.YangPlayer);
+      this.volumeButton.init();
+
       // initialize screen mode button
       this.screenMode = new ScreenMode(this.YangPlayer);
       this.screenMode.init();
-
-      this.YangPlayer.oncanplaythrough = () => {
-        this.playLoading.style.display = 'none';
-        this.YangPlayer.style.opacity = .5;
-        this.playCircle.style.display = 'block';
-        this.setPlayerState(this.pausingState);
-
-        this.controlPlayButton.onclick = () => {
-          this.playerState.playButtonWasClicked();
-        };
-
-        this.YangPlayer.onclick = () => {
-          this.playerState.playButtonWasClicked();
-        };
-
-        this.playCircle.onclick = () => {
-          this.playerState.playButtonWasClicked();
-        };
-
-        document.onkeydown = (event) => {
-          let keyCode = event.which || event.keyCode;
-          
-          if(keyCode === 32) { // the Unicode vaule of `Space`
-            this.playerState.playButtonWasClicked();
-          }
-        };
-      };
-    }
-
-    playVideo() {
-      this.YangPlayer.play();
-
-      this.playButton.style.display = 'none';
-      this.pauseButton.style.display = 'inline-block';
-      this.YangPlayer.style.opacity = 1;
-      this.playCircle.style.display = 'none';
-      this.setPlayerState(this.playingState);
-    }
-
-    pauseVideo() {
-      this.YangPlayer.pause();
-
-      this.pauseButton.style.display = 'none';
-      this.playButton.style.display = 'inline-block';
-      this.YangPlayer.style.opacity = .5;
-      this.playCircle.style.display = 'block';
-      this.setPlayerState(this.pausingState);
-    }
-
-    // @param {[object State]} playerState - the state of video player
-    setPlayerState(playerState) {
-      this.playerState = playerState;
     }
   }
 
