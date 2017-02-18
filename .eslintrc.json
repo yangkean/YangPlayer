@@ -1,9 +1,14 @@
 {
+  "parserOptions": {
+      "ecmaFeatures": {
+          "impliedStrict": true
+      }
+  },
   "extends": "airbnb",
   "env": {
     "browser": true,
     "node": true,
-    "es6": true,
+    "es6": true
   },
   "rules": {
     "indent": ["error", 2],
@@ -14,7 +19,7 @@
     "brace-style": ["error", "stroustrup"],
     "new-cap": "warn",
     "no-param-reassign": "off",
-    "consistent-return": "warn",
+    "consistent-return": "off",
     "keyword-spacing": ["error", {"after": false, "overrides": {"return": {"after": true}, "else": {"after": true} } }],
     "space-before-function-paren": ["error", "never"],
     "no-trailing-spaces": ["error", {"skipBlankLines": true}],
@@ -32,5 +37,7 @@
     "max-len": "off",
     "no-nested-ternary": "warn",
     "radix": "off",
+    "strict": "off",
+    "no-plusplus": "off"
   }
 }

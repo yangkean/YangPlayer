@@ -1,4 +1,4 @@
-(function() {
+;(function() {
   'use strict';
 
   // @param {string} selector - a CSS selector string
@@ -131,30 +131,42 @@
 
   // an abstract class of some video player states
   class State {
-    // @param {[object YangPlayer]} playerObject - an object `new` from class `YangPlayer`
-    constructor(playerObject) {
-      this.playerObject = playerObject;
+    // @param {[object Class]} classObject - an object `new` from a kind of Class
+    constructor(classObject) {
+      this.classObject = classObject;
     }
-    playButtonWasClicked() {
-      throw new Error('父类的 playButtonWasClicked 方法必须被重写！');
+    buttonWasClicked() {
+      throw new Error('父类的 buttonWasClicked 方法必须被重写！');
     }
   }
 
   class LoadingState extends State {
-    playButtonWasClicked() {
+    buttonWasClicked() {
       // todo
     }
   }
 
   class PlayingState extends State {
-    playButtonWasClicked() {
-      this.playerObject.pauseVideo();
+    buttonWasClicked() {
+      this.classObject.pauseVideo();
     }
   }
 
   class PausingState extends State {
-    playButtonWasClicked() {
-      this.playerObject.playVideo();
+    buttonWasClicked() {
+      this.classObject.playVideo();
+    }
+  }
+
+  class NormalVolumeState extends State {
+    buttonWasClicked() {
+      this.classObject.muteVolume();
+    }
+  }
+
+  class MuteVolumeState extends State {
+    buttonWasClicked() {
+      this.classObject.normalVolume();
     }
   }
 
@@ -181,25 +193,25 @@
         this.playLoading.style.display = 'none';
         this.player.style.opacity = .5;
         this.playCircle.style.display = 'block';
-        this.setPlayerState(this.pausingState);
+        this.setState(this.pausingState);
 
         this.controlPlayButton.onclick = () => {
-          this.playerState.playButtonWasClicked();
+          this.playerState.buttonWasClicked();
         };
 
         this.player.onclick = () => {
-          this.playerState.playButtonWasClicked();
+          this.playerState.buttonWasClicked();
         };
 
         this.playCircle.onclick = () => {
-          this.playerState.playButtonWasClicked();
+          this.playerState.buttonWasClicked();
         };
 
         document.onkeydown = (event) => {
           let keyCode = event.which || event.keyCode;
           
           if(keyCode === 32) { // the Unicode vaule of `Space`
-            this.playerState.playButtonWasClicked();
+            this.playerState.buttonWasClicked();
           }
         };
       };
@@ -212,7 +224,7 @@
       this.pauseButton.style.display = 'inline-block';
       this.player.style.opacity = 1;
       this.playCircle.style.display = 'none';
-      this.setPlayerState(this.playingState);
+      this.setState(this.playingState);
     }
 
     pauseVideo() {
@@ -222,11 +234,11 @@
       this.playButton.style.display = 'inline-block';
       this.player.style.opacity = .5;
       this.playCircle.style.display = 'block';
-      this.setPlayerState(this.pausingState);
+      this.setState(this.pausingState);
     }
     
     // @param {[object State]} playerState - the state of video player
-    setPlayerState(playerState) {
+    setState(playerState) {
       this.playerState = playerState;
     }
   }
@@ -235,6 +247,15 @@
   class Volume {
     // @param {[object HTMLElement]} player
     constructor(player) {
+      const VOLUME_MIDDLE_NUMBER = 50;
+      const VOLUME_MIDDLE_VALUE = .5;
+      const VOLUME_MIDDLE_BAR_HEIGHT = 28; // the height from the bottom of volumeDragButton to the bottom of volumeBar when volume is middle (unit: px)
+      const VOLUME_MIN_MOUSE_MAXY = 56; // mouse max y offset(px) relative to volumeBar when volume is min (unit: px)
+
+      // current possible state of volume button
+      this.normalVolumeState = new NormalVolumeState(this);
+      this.muteVolumeState = new MuteVolumeState(this);
+
       this.player = player;
       this.volumeButton = $('.YangPlayer-volume-button');
       this.volumeUpButton = $('.YangPlayer-volume-up');
@@ -242,34 +263,67 @@
       this.volumeOffButton = $('.YangPlayer-volume-off');
       this.volumeChangeRect = $('.YangPlayer-volume-change');
       this.volumeNumber = $('.YangPlayer-volume-number');
-      this.volumeNumberValue = 50; // relative to 100(1 - 100), default: 50
-      this.realVolumeValue = 0.5; // relative to 1(0.01 - 1.00), default: 0.5
+      this.midVolumeBarH = VOLUME_MIDDLE_BAR_HEIGHT;
+      this.volumeNumberValue = VOLUME_MIDDLE_NUMBER; // relative to 100(1 - 100), default: 50
+      this.realVolumeValue = VOLUME_MIDDLE_VALUE; // relative to 1(0.01 - 1.00), default: 0.5
       this.volumeBar = $('.YangPlayer-volume-bar');
       this.volumeDragButton = $('.YangPlayer-volume-dragButton');
       this.currentVolumeReverseBar = $('.YangPlayer-currentVolume-reverseBar');
-      this.currentVolumeBarH = null; // the height from the bottom of volumeDragButton to the bottom of volumeBar
-      this.mouseYMax = null; // max currentVolumeBarH or mouse max y offset(px) relative to volumeBar when volume is min
+      this.currentVolumeBarH = VOLUME_MIDDLE_BAR_HEIGHT; // the height from the bottom of volumeDragButton to the bottom of volumeBar, default: 28
+      this.mouseYMax = VOLUME_MIN_MOUSE_MAXY; // mouse max y offset(px) relative to volumeBar when volume is min
+      this.volumeState = null;
+      this.mousedownFired = false;
     }
 
     init() {
+      this.setState(this.normalVolumeState);
       this.displayVolumeButton();
-      this.player.volume = this.realVolumeValue;
-      this.volumeNumber.innerHTML = this.volumeNumberValue;
+      this.normalVolume();
       this.controlVolumeButton();
+
+      this.volumeButton.onclick = () => {
+        if(this.mousedownFired) {
+          this.mousedownFired = false;
+
+          return;
+        }
+
+        this.volumeState.buttonWasClicked();
+      };
+
+      this.volumeChangeRect.onclick = () => {
+        this.mousedownFired = true;
+      };
     }
 
     // control the drag button of volume to adjust volume
-    controlVolumeButton() {
+    // @param {number(px)} [mouseY] - the y offset you need to set the drag button
+    controlVolumeButton(mouseY) {
       let volumeDragButtonX = Number.parseInt(window.getComputedStyle(this.volumeDragButton).left);
 
+      // if mouseY is given
+      if(mouseY) {
+        Utility.offset({
+          top: mouseY,
+          left: volumeDragButtonX,
+        }, this.volumeDragButton);
+
+        this.currentVolumeReverseBar.style.height = `${Utility.getOffsetTop(this.volumeDragButton) / Utility.outerHeight(this.volumeBar) * 100}%`;
+
+        return;
+      }
+
       this.volumeDragButton.onmousedown = (event1) => {
+        // mousedown event will trigger click event and the click event will bubble to parents elements
+        // the order in Chrome is: mousedown, mouseup, click
+        // in order to avoid click event triggered by mousedown, use flag `mousedownFired` to judge if `this.volumeButton.onclick` should happen
+        this.mousedownFired = true;
+
         Utility.addClass('draggable', this.volumeDragButton);
 
         this.volumeDragButton.onmousemove = (event2) => {
           // current mouse y offset
           let mouseY = event2.pageY - (Utility.outerHeight(this.volumeDragButton) / 2) - Utility.getPageY(this.volumeBar);
-          // mouse max y offset(px) relative to volumeBar when volume is min
-          this.mouseYMax = Utility.outerHeight(this.volumeBar) - Utility.outerHeight(this.volumeDragButton);
           // correct mouse y offset after adjusting
           let adjustMouseY = (mouseY <= 0) ? 0 : (mouseY >= this.mouseYMax ? this.mouseYMax : mouseY);
 
@@ -277,6 +331,8 @@
             top: adjustMouseY,
             left: volumeDragButtonX,
           }, $('.draggable'));
+
+          this.currentVolumeReverseBar.style.height = `${Utility.getOffsetTop(this.volumeDragButton) / Utility.outerHeight(this.volumeBar) * 100}%`;
 
           // change real volume adcording to volumeDragButton
           this.currentVolumeBarH = Utility.outerHeight(this.volumeBar) - adjustMouseY - Utility.outerHeight(this.volumeDragButton);
@@ -313,11 +369,31 @@
 
       this.volumeNumber.innerHTML = this.volumeNumberValue;
       this.player.volume = this.realVolumeValue;
-      this.currentVolumeReverseBar.style.height = `${Utility.getOffsetTop(this.volumeDragButton) / Utility.outerHeight(this.volumeBar) * 100}%`;
     }
 
     // display volumeButton
-    displayVolumeButton() {
+    // @param {string} [type] - the volume type you want to display
+    //        => 'normal' - volume = 0.5
+    //        => 'mute' - volume = 0
+    displayVolumeButton(type) {
+      // if type is given
+      if(type) {
+        if(type === 'normal') {
+          this.volumeUpButton.style.display = 'inline-block';
+          this.volumeDownButton.style.display = 'none';
+          this.volumeOffButton.style.display = 'none';
+
+          return;
+        }
+        if(type === 'mute') {
+          this.volumeOffButton.style.display = 'inline-block';
+          this.volumeUpButton.style.display = 'none';
+          this.volumeDownButton.style.display = 'none';
+
+          return;
+        }
+      }
+
       this.volumeButton.onmouseover = () => {
         this.volumeChangeRect.style.display = 'block';
         this.volumeButton.style.backgroundColor = '#ccc';
@@ -348,7 +424,29 @@
         this.volumeButton.style.backgroundColor = '#eee';
       };
     }
-  }
+
+    // set normal volume
+    normalVolume() {
+      this.changeVolume(this.midVolumeBarH); // change real volume
+      this.controlVolumeButton(this.midVolumeBarH); // change the position of drag button
+      this.displayVolumeButton('normal'); // display different volume button
+      this.setState(this.normalVolumeState);
+    }
+
+    // set mute volume
+    muteVolume() {
+      this.changeVolume(0); // change real volume
+      this.controlVolumeButton(this.mouseYMax); // change the position of drag button
+      this.displayVolumeButton('mute'); // display different volume button
+      this.setState(this.muteVolumeState);
+    }
+
+    // set the state of volume button
+    // @param {[object State]} volumeBtnState
+    setState(volumeBtnState) {
+      this.volumeState = volumeBtnState;
+    }
+   }
 
   // a class of video player progress bar
   class ProgressBar {
@@ -372,7 +470,8 @@
       let timeBarLength = Utility.outerWidth($('.YangPlayer-time'));
       let volumeBtnLength = Utility.outerWidth($('.YangPlayer-volume-button'));
       let screenModeLength = Utility.outerWidth($('.YangPlayer-screen-mode'));
-      let progressLength = controlsLength - playBtnLength - timeBarLength - volumeBtnLength - screenModeLength - 20;
+      let settingBtnLength = Utility.outerWidth($('.YangPlayer-setting-button'));
+      let progressLength = controlsLength - playBtnLength - timeBarLength - volumeBtnLength - screenModeLength - settingBtnLength - 25;
 
       $('.YangPlayer-progress').style.width = `${progressLength / controlsLength * 100}%`;
     }
@@ -406,6 +505,42 @@
 
       this.playedTime.innerHTML = `${playedHours}:${playedMinutes}:${playedSeconds}`;
       this.totalTime.innerHTML = `${totalHours}:${totalMinutes}:${totalSeconds}`;
+    }
+  }
+
+  // a class of video player setting button
+  class SettingBtn {
+    // @param {[object HTMLElement]} player
+    constructor(player) {
+      this.player = player;
+      this.settingBtn = $('.YangPlayer-setting-button');
+      this.settingPane = $('.YangPlayer-setting-pane');
+      this.loopSwitch = $('.YangPlayer-loop-switch');
+      this.loopSwitchOn = $('.YangPlayer-loop-on');
+      this.loopSwitchOff = $('.YangPlayer-loop-off');
+      this.loopState = null;
+    }
+
+    init() {
+      this.settingBtn.onmouseover = () => {
+        this.settingPane.style.display = 'block';
+      };
+
+      this.settingBtn.onmouseout = () => {
+        this.settingPane.style.display = 'none';
+      };
+
+      this.loopSwitch.onclick =this.loopPlay;
+    }
+
+    // control loop playing
+    loopPlay() {
+      this.player.loop = true;
+    }
+
+    // @param {number} rate - playback rate
+    setPlayRate(rate) {
+      this.player.playbackRate = rate;
     }
   }
 
@@ -637,10 +772,11 @@
     constructor() {
       // some important properties about YangPlayer video player
       this.YangPlayer = $('#YangPlayer');
-      this.controlPlay = null; // the button control playing and pausing
-      this.volumeButton = null; // the button control volume in control bar
+      this.controlPlay = null; // the button controling playing and pausing
+      this.volumeButton = null; // the button controling volume in control bar
       this.progressBar = null; // the progress bar and its time bar
       this.screenMode = null; // the button controling fullscreen and minscreen
+      this.settingButton = null; // the button controling setting
     }
 
     init() {
@@ -655,6 +791,10 @@
       // initialize volume button
       this.volumeButton = new Volume(this.YangPlayer);
       this.volumeButton.init();
+
+      // initialize setting button
+      this.settingButton = new SettingBtn(this.YangPlayer);
+      this.settingButton.init();
 
       // initialize screen mode button
       this.screenMode = new ScreenMode(this.YangPlayer);
