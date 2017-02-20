@@ -1,14 +1,16 @@
-{
+'use strict';
+
+module.exports = {
   "parserOptions": {
-      "ecmaFeatures": {
-          "impliedStrict": true
-      }
+    "ecmaFeatures": {
+        "impliedStrict": true,
+    },
   },
   "extends": "airbnb",
   "env": {
     "browser": true,
     "node": true,
-    "es6": true
+    "es6": true,
   },
   "rules": {
     "indent": ["error", 2],
@@ -38,6 +40,7 @@
     "no-nested-ternary": "warn",
     "radix": "off",
     "strict": "off",
-    "no-plusplus": "off"
-  }
-}
+    "no-plusplus": "off",
+    "no-extra-semi": "warn",
+  },
+};

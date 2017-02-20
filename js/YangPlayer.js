@@ -8,6 +8,87 @@
 
   // a utility class containing some utilities
   class Utility {
+    // get the Browser type and its version by `navigator.userAgent`
+    // NOTE: It is easy to spoof `navigator.userAgent`, so the result may be not reliable 
+    // @return {object} an object containing `browser` and `version` properties
+    // from [http://stackoverflow.com/questions/2400935/browser-detection-in-javascript#answer-2401861]
+    static getBrowserInfo() {
+      let ua = navigator.userAgent;
+      let tem;
+      let M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+
+      if(/trident/i.test(M[1])) {
+        tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
+
+        return {
+          'browser': 'IE',
+          'version': (tem[1] || ''),
+        }
+      }
+
+      if(M[1] === 'Chrome') {
+        tem = ua.match(/\b(OPR|Edge)\/(\d+)/);
+
+        if(tem) {
+          return {
+            'browser': 'Opera',
+            'version': tem.slice(1)[1],
+          }
+        }
+      }
+
+      M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
+
+      if((tem = ua.match(/version\/(\d+)/i))) {
+        M.splice(1, 1, tem[1]);
+      }
+
+      return { 
+        'browser': M[0],
+        'version': M[1],
+      };
+    }
+
+    // detect the browser by `duck typing`
+    // @param {string} browser - the name of browser
+    // @return {boolean}
+    // from [http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser#answer-9851769]
+    static isWhichBrowser(browser) {
+      let browserName = browser.toLowerCase();
+
+      // Opera 8.0+
+      let isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+
+      // Firefox 1.0+
+      let isFirefox = typeof InstallTrigger !== 'undefined';
+
+      // Internet Explorer 6-11
+      let isIE = /*@cc_on!@*/false || !!document.documentMode;
+
+      // Edge 20+
+      let isEdge = !isIE && !!window.StyleMedia;
+
+      // Chrome 1+
+      let isChrome = !!window.chrome && !!window.chrome.webstore;
+
+      // Safari 3.0+ "[object HTMLElementConstructor]" 
+      let isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || safari.pushNotification) || (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0 || !isChrome && !isOpera && window.webkitAudioContext !== undefined);
+
+      // Blink engine detection
+      // let isBlink = (isChrome || isOpera) && !!window.CSS;
+
+      let browserObj = {
+        'opera': isOpera,
+        'firefox': isFirefox,
+        'safari': isSafari,
+        'ie': isIE,
+        'edge': isEdge,
+        'chrome': isChrome,
+      };
+
+      return browserObj[browserName];
+    }
+
     // add a class name for a html element
     // @param {string} className
     // @param {[object HTMLElement]} element
@@ -297,14 +378,14 @@
     }
 
     // control the drag button of volume to adjust volume
-    // @param {number(px)} [mouseY] - the y offset you need to set the drag button
-    controlVolumeButton(mouseY) {
+    // @param {number(px)} [mouseYOffset] - the y offset you need to set the drag button
+    controlVolumeButton(mouseYOffset) {
       let volumeDragButtonX = Number.parseInt(window.getComputedStyle(this.volumeDragButton).left);
 
       // if mouseY is given
-      if(mouseY) {
+      if(mouseYOffset) {
         Utility.offset({
-          top: mouseY,
+          top: mouseYOffset,
           left: volumeDragButtonX,
         }, this.volumeDragButton);
 
@@ -395,7 +476,8 @@
       }
 
       this.volumeButton.onmouseover = () => {
-        this.volumeChangeRect.style.display = 'block';
+        this.volumeChangeRect.style.opacity = 1;
+        this.volumeChangeRect.style.visibility = 'visible';
         this.volumeButton.style.backgroundColor = '#ccc';
 
         this.volumeChangeRect.onmousemove = () => {
@@ -420,7 +502,8 @@
       };
 
       this.volumeButton.onmouseout = () => {
-        this.volumeChangeRect.style.display = 'none';
+        this.volumeChangeRect.style.opacity = 0;
+        this.volumeChangeRect.style.visibility = 'hidden';
         this.volumeButton.style.backgroundColor = '#eee';
       };
     }
@@ -465,13 +548,15 @@
 
     // set the percent width of the progress bar
     static setProgressLength() {
-      let controlsLength = Utility.outerWidth($('#YangPlayer'));
+      // the offsetWidth of video(controlsBar) is 0 when Safari is in fullscreen mode, so choose to use `window.innerWidth` to get its width
+      let controlsLength = (Utility.isWhichBrowser('Safari') && document.webkitIsFullScreen) ? window.innerWidth : Utility.outerWidth($('#YangPlayer'));
+
       let playBtnLength = Utility.outerWidth($('.YangPlayer-controlPlay-button'));
       let timeBarLength = Utility.outerWidth($('.YangPlayer-time'));
       let volumeBtnLength = Utility.outerWidth($('.YangPlayer-volume-button'));
       let screenModeLength = Utility.outerWidth($('.YangPlayer-screen-mode'));
       let settingBtnLength = Utility.outerWidth($('.YangPlayer-setting-button'));
-      let progressLength = controlsLength - playBtnLength - timeBarLength - volumeBtnLength - screenModeLength - settingBtnLength - 25;
+      let progressLength = controlsLength - playBtnLength - timeBarLength - volumeBtnLength - screenModeLength - settingBtnLength - 30;
 
       $('.YangPlayer-progress').style.width = `${progressLength / controlsLength * 100}%`;
     }
@@ -512,30 +597,102 @@
   class SettingBtn {
     // @param {[object HTMLElement]} player
     constructor(player) {
+      const PLAYBACK_RATE = [0.5, 1.0, 1.5, 2.0, 4.0];
+
       this.player = player;
       this.settingBtn = $('.YangPlayer-setting-button');
       this.settingPane = $('.YangPlayer-setting-pane');
       this.loopSwitch = $('.YangPlayer-loop-switch');
       this.loopSwitchOn = $('.YangPlayer-loop-on');
       this.loopSwitchOff = $('.YangPlayer-loop-off');
+      this.autoSwitch = $('.YangPlayer-auto-switch');
+      this.autoSwitchOn = $('.YangPlayer-auto-on');
+      this.autoSwitchOff = $('.YangPlayer-auto-off');
+      this.rateBtn = $('.YangPlayer-rate-btn');
+      this.rate = PLAYBACK_RATE;
       this.loopState = null;
+      this.autoState = null;
     }
 
     init() {
+      this.loopState = false;
+      this.autoState = false;
+
       this.settingBtn.onmouseover = () => {
-        this.settingPane.style.display = 'block';
+        this.settingPane.style.opacity = 1;
+        this.settingPane.style.visibility = 'visible';
+        this.settingBtn.style.backgroundColor = '#ccc';
       };
 
       this.settingBtn.onmouseout = () => {
-        this.settingPane.style.display = 'none';
+        this.settingPane.style.opacity = 0;
+        this.settingPane.style.visibility = 'hidden';
+        this.settingBtn.style.backgroundColor = '#eee';
       };
 
-      this.loopSwitch.onclick =this.loopPlay;
+      this.loopSwitch.onclick = () => {
+        this.loopPlay();
+      };
+
+      this.autoSwitch.onclick = () => {
+        this.autoPlay();
+      };
+
+      this.controlPlayRate();
+    }
+
+    // control play rate through button
+    controlPlayRate() {
+      for(let i = 0; i < this.rateBtn.children.length; i++) {
+        this.rateBtn.children[i].onclick = () => {
+          for(let j = 0; j < this.rateBtn.children.length; j++) {
+            this.rateBtn.children[j].style.opacity = .4;
+          }
+
+          this.rateBtn.children[i].style.opacity = 1;
+          this.setPlayRate(this.rate[i]);
+        };
+      }
     }
 
     // control loop playing
     loopPlay() {
+      if(this.loopState) {
+        this.loopState = false;
+        this.loopSwitchOff.style.display = 'inline-block';
+        this.loopSwitchOn.style.display = 'none';
+        this.player.loop = false;
+
+        return;
+      }
+
+      this.loopState = true;
+      this.loopSwitchOff.style.display = 'none';
+      this.loopSwitchOn.style.display = 'inline-block';
       this.player.loop = true;
+    }
+
+    // control auto playing
+    autoPlay() {
+      if(this.autoState) {
+        this.autoState = false;
+        this.autoSwitchOff.style.display = 'inline-block';
+        this.autoSwitchOn.style.display = 'none';
+        this.player.autoplay = false;
+
+        return;
+      }
+
+      this.autoState = true;
+      this.autoSwitchOff.style.display = 'none';
+      this.autoSwitchOn.style.display = 'inline-block';
+      this.player.autoplay = true;
+
+      if(this.player.paused) {
+        let player = new ControlPlayBtn(this.player);
+
+        player.playVideo();
+      }
     }
 
     // @param {number} rate - playback rate
@@ -550,7 +707,6 @@
     constructor(player) {
       this.player = player;
       this.controlBar = $('.YangPlayer-control');
-      this.timeoutId = null;
       this.controlBarBox = $('.YangPlayer-control-box');
       this.screenModeButton = $('.YangPlayer-screen-mode');
       this.fullscreenButton = $('.YangPlayer-fullscreen');
@@ -686,25 +842,23 @@
         this.controlBar.onmouseenter = null;
         this.controlBarBox.onmouseenter = null;
         this.controlBar.onmouseleave = null;
-        clearTimeout(this.timeoutId); // avoid the impact of the remaining timer
+        this.controlBar.style.transition = 'none';
+        this.controlBar.style.opacity = 1;
         this.controlBar.style.visibility = 'visible';
       }
       else {
         this.fullscreenButton.style.display = 'none';
         this.minscreenButton.style.display = 'inline-block';
+        this.controlBar.style.transition = 'all 0.5s linear';
 
         this.controlBar.onmouseleave = () => {
-          this.timeoutId = setTimeout(() => {
-            this.controlBar.style.visibility = 'hidden';
-          }, 3000);
+          this.controlBar.style.opacity = 0;
+          this.controlBar.style.visibility = 'hidden';
         };
 
         this.controlBarBox.onmouseenter = () => {
+          this.controlBar.style.opacity = 1;
           this.controlBar.style.visibility = 'visible';
-        };
-
-        this.controlBar.onmouseenter = () => {
-          clearTimeout(this.timeoutId);
         };
       }
     }
