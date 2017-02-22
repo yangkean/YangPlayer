@@ -42,5 +42,6 @@ module.exports = {
     "strict": "off",
     "no-plusplus": "off",
     "no-extra-semi": "warn",
+    "no-underscore-dangle": "off",
   },
 };

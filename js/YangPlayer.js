@@ -1,6 +1,10 @@
 ;(function() {
   'use strict';
 
+  const YangPlayer_GLOBAL = {
+    playerPlayState: null, // {object} store the play state of video
+  };
+
   // @param {string} selector - a CSS selector string
   function $(selector) {
     return document.querySelector(selector);
@@ -9,7 +13,7 @@
   // a utility class containing some utilities
   class Utility {
     // get the Browser type and its version by `navigator.userAgent`
-    // NOTE: It is easy to spoof `navigator.userAgent`, so the result may be not reliable 
+    // NOTE: It is easy to spoof `navigator.userAgent`, so the result may be not reliable
     // @return {object} an object containing `browser` and `version` properties
     // from [http://stackoverflow.com/questions/2400935/browser-detection-in-javascript#answer-2401861]
     static getBrowserInfo() {
@@ -21,9 +25,9 @@
         tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
 
         return {
-          'browser': 'IE',
-          'version': (tem[1] || ''),
-        }
+          browser: 'IE',
+          version: (tem[1] || ''),
+        };
       }
 
       if(M[1] === 'Chrome') {
@@ -31,9 +35,9 @@
 
         if(tem) {
           return {
-            'browser': 'Opera',
-            'version': tem.slice(1)[1],
-          }
+            browser: 'Opera',
+            version: tem.slice(1)[1],
+          };
         }
       }
 
@@ -43,9 +47,9 @@
         M.splice(1, 1, tem[1]);
       }
 
-      return { 
-        'browser': M[0],
-        'version': M[1],
+      return {
+        browser: M[0],
+        version: M[1],
       };
     }
 
@@ -54,6 +58,10 @@
     // @return {boolean}
     // from [http://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser#answer-9851769]
     static isWhichBrowser(browser) {
+      if(!browser) {
+        throw new Error('param "browser" of method "isWhichBrowser" is not given!');
+      }
+
       let browserName = browser.toLowerCase();
 
       // Opera 8.0+
@@ -71,19 +79,24 @@
       // Chrome 1+
       let isChrome = !!window.chrome && !!window.chrome.webstore;
 
-      // Safari 3.0+ "[object HTMLElementConstructor]" 
-      let isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || safari.pushNotification) || (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0 || !isChrome && !isOpera && window.webkitAudioContext !== undefined);
+      // Safari 3.0+ "[object HTMLElementConstructor]"
+      let isSafari = (/constructor/i.test(window.HTMLElement))
+                      || ((function(p) {
+                        return p.toString() === '[object SafariRemoteNotification]';
+                      })(!window.safari || safari.pushNotification))
+                      || (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0)
+                      || (!isChrome && !isOpera && window.webkitAudioContext !== undefined);
 
       // Blink engine detection
       // let isBlink = (isChrome || isOpera) && !!window.CSS;
 
       let browserObj = {
-        'opera': isOpera,
-        'firefox': isFirefox,
-        'safari': isSafari,
-        'ie': isIE,
-        'edge': isEdge,
-        'chrome': isChrome,
+        opera: isOpera,
+        firefox: isFirefox,
+        safari: isSafari,
+        ie: isIE,
+        edge: isEdge,
+        chrome: isChrome,
       };
 
       return browserObj[browserName];
@@ -94,7 +107,7 @@
     // @param {[object HTMLElement]} element
     static addClass(className, element) {
       if(!element) {
-        return;
+        throw new Error('second param "element" of method "addClass" is not given!');
       }
       
       let currentClassName = element.className;
@@ -107,7 +120,7 @@
     // @param {[object HTMLElement]} element
     static removeClass(className, element) {
       if(!element) {
-        return;
+        throw new Error('second param "element" of method "removeClass" is not given!');
       }
       
       let currentClassName = element.className;
@@ -124,7 +137,7 @@
     // @param {[object HTMLElement]} element
     static offset(coordinates, element) {
       if(!element) {
-        return;
+        throw new Error('second param "element" of method "offset" is not given!');
       }
 
       let offsetX = coordinates.left;
@@ -141,7 +154,7 @@
     // @return {number(px)} the width containing content,padding and border of an element
     static outerWidth(element) {
       if(!element) {
-        return;
+        throw new Error('param "element" of method "outerWidth" is not given!');
       }
 
       return element.offsetWidth;
@@ -151,7 +164,7 @@
     // @return {number(px)} the height containing content,padding and border of an element
     static outerHeight(element) {
       if(!element) {
-        return;
+        throw new Error('param "element" of method "outerHeight" is not given!');
       }
       
       return element.offsetHeight;
@@ -162,7 +175,7 @@
     // @return {number(px)} x coordinate of the element
     static getOffsetLeft(element) {
       if(!element) {
-        return;
+        throw new Error('param "element" of method "getOffsetLeft" is not given!');
       }
       
       return element.offsetLeft;
@@ -173,7 +186,7 @@
     // @return {number(px)} y coordinate of the element
     static getOffsetTop(element) {
       if(!element) {
-        return;
+        throw new Error('param "element" of method "getOffsetTop" is not given!');
       }
       
       return element.offsetTop;
@@ -184,7 +197,7 @@
     // @return {number(px)} x coordinate of the element
     static getPageX(element) {
       if(!element) {
-        return;
+        throw new Error('param "element" of method "getPageX" is not given!');
       }
       
       let pageXOffset = window.pageXOffset; // current scrolling horizontal offset of document
@@ -199,7 +212,7 @@
     // @return {number(px)} y coordinate of the element
     static getPageY(element) {
       if(!element) {
-        return;
+        throw new Error('param "element" of method "getPageY" is not given!');
       }
       
       let pageYOffset = window.pageYOffset; // current scrolling vertical offset of document
@@ -217,7 +230,7 @@
       this.classObject = classObject;
     }
     buttonWasClicked() {
-      throw new Error('父类的 buttonWasClicked 方法必须被重写！');
+      throw new Error('method "buttonWasClicked" of super class must be overrided!');
     }
   }
 
@@ -239,6 +252,12 @@
     }
   }
 
+  class PlayErrorState extends State {
+    buttonWasClicked() {
+      // todo
+    }
+  }
+
   class NormalVolumeState extends State {
     buttonWasClicked() {
       this.classObject.muteVolume();
@@ -251,6 +270,54 @@
     }
   }
 
+  class SwitchOnState extends State {
+    // @param {string} btnType
+    //        => 'loop' - the button of looping video
+    //        => 'auto' - the button of autoplaying video
+    buttonWasClicked(btnType) {
+      if(btnType) {
+        if(btnType === 'loop') {
+          this.classObject.loopPlayOff();
+
+          return;
+        }
+        if(btnType === 'auto') {
+          this.classObject.autoPlayOff();
+
+          return;
+        }
+
+        throw new Error('param "btnType" of method "buttonWasClicked" is incorrect!');
+      }
+
+      throw new Error('param "btnType" of method "buttonWasClicked" is not given!');
+    }
+  }
+
+  class SwitchOffState extends State {
+    // @param {string} btnType
+    //        => 'loop' - the button of looping video
+    //        => 'auto' - the button of autoplaying video
+    buttonWasClicked(btnType) {
+      if(btnType) {
+        if(btnType === 'loop') {
+          this.classObject.loopPlayOn();
+
+          return;
+        }
+        if(btnType === 'auto') {
+          this.classObject.autoPlayOn();
+
+          return;
+        }
+
+        throw new Error('param "btnType" of method "buttonWasClicked" is incorrect!');
+      }
+
+      throw new Error('param "btnType" of method "buttonWasClicked" is not given!');
+    }
+  }
+
   // a class of control-play button
   class ControlPlayBtn {
     // @param {[object HTMLElement]} player
@@ -259,6 +326,7 @@
       this.loadingState = new LoadingState(this);
       this.playingState = new PlayingState(this);
       this.pausingState = new PausingState(this);
+      this.playErrorState = new PlayErrorState(this);
 
       this.player = player;
       this.playButton = $('.YangPlayer-play-button');
@@ -266,15 +334,13 @@
       this.playCircle = $('.YangPlayer-play-circle');
       this.playLoading = $('.YangPlayer-loading');
       this.controlPlayButton = $('.YangPlayer-controlPlay-button');
-      this.playerState = null;
+      this.replayButton = $('.YangPlayer-replay');
+      this.playerState = YangPlayer_GLOBAL.playerPlayState;
     }
 
     init() {
       this.player.oncanplaythrough = () => {
-        this.playLoading.style.display = 'none';
-        this.player.style.opacity = .5;
-        this.playCircle.style.display = 'block';
-        this.setState(this.pausingState);
+        this.setPausingSign();
 
         this.controlPlayButton.onclick = () => {
           this.playerState.buttonWasClicked();
@@ -289,18 +355,28 @@
         };
 
         document.onkeydown = (event) => {
-          let keyCode = event.which || event.keyCode;
+          let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
           
-          if(keyCode === 32) { // the Unicode vaule of `Space`
+          if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
             this.playerState.buttonWasClicked();
           }
         };
+
+        this.player.oncanplaythrough = null; // remove this event binding after video first can be played through
       };
     }
 
-    playVideo() {
-      this.player.play();
+    setPausingSign() {
+      this.playLoading.style.display = 'none';
+      this.player.style.opacity = .5;
+      this.playCircle.style.display = 'block';
+      this.pauseButton.style.display = 'none';
+      this.playButton.style.display = 'inline-block';
+      this.setState(this.pausingState);
+    }
 
+    setPlayingSign() {
+      this.replayButton.style.display = 'none';
       this.playButton.style.display = 'none';
       this.pauseButton.style.display = 'inline-block';
       this.player.style.opacity = 1;
@@ -308,18 +384,88 @@
       this.setState(this.playingState);
     }
 
-    pauseVideo() {
-      this.player.pause();
-
-      this.pauseButton.style.display = 'none';
-      this.playButton.style.display = 'inline-block';
+    setReplayPausingSign() {
+      this.playLoading.style.display = 'none';
       this.player.style.opacity = .5;
-      this.playCircle.style.display = 'block';
+      this.playCircle.style.display = 'none';
+      this.replayButton.style.display = 'block';
+      this.playButton.style.display = 'inline-block';
+      this.pauseButton.style.display = 'none';
       this.setState(this.pausingState);
+    }
+
+    // @param {object} progressBarObj - an object `new` from Class `ProgressBars`
+    replayVideo(progressBarObj) {
+      progressBarObj.progressPlayedbarDisplay();
+      this.playVideo();
+    }
+
+    // @param {object} progressBarObj - an object `new` from Class `ProgressBars`
+    setReplayEventBinding(progressBarObj) {
+      this.setReplayPausingSign();
+
+      this.controlPlayButton.onclick = () => {
+        this.replayVideo(progressBarObj);
+        this.restoreDefaultBinding();
+      };
+
+      this.replayButton.onclick = () => {
+        this.replayVideo(progressBarObj);
+        this.restoreDefaultBinding();
+      };
+
+      this.player.onclick = () => {
+        this.replayVideo(progressBarObj);
+        this.restoreDefaultBinding();
+      };
+
+      document.onkeydown = (event) => {
+        let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
+          
+        if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
+          this.replayVideo(progressBarObj);
+          this.restoreDefaultBinding();
+        }
+      };
+    }
+
+    // restore default playing or pausing binding after replayBtn was clicked
+    restoreDefaultBinding() {
+      this.controlPlayButton.onclick = () => {
+        this.playerState.buttonWasClicked();
+      };
+
+      this.replayButton.onclick = null;
+
+      this.player.onclick = () => {
+        this.playerState.buttonWasClicked();
+      };
+
+      document.onkeydown = (event) => {
+        let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
+        
+        if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
+          this.playerState.buttonWasClicked();
+        }
+      };
+    }
+
+    playVideo() {
+      this.setPlayingSign();
+
+      this.player.play();
+    }
+
+    pauseVideo() {
+      this.setPausingSign();
+
+      this.player.pause();
     }
     
     // @param {[object State]} playerState - the state of video player
     setState(playerState) {
+      YangPlayer_GLOBAL.playerPlayState = playerState;
+
       this.playerState = playerState;
     }
   }
@@ -351,16 +497,16 @@
       this.volumeDragButton = $('.YangPlayer-volume-dragButton');
       this.currentVolumeReverseBar = $('.YangPlayer-currentVolume-reverseBar');
       this.currentVolumeBarH = VOLUME_MIDDLE_BAR_HEIGHT; // the height from the bottom of volumeDragButton to the bottom of volumeBar, default: 28
-      this.mouseYMax = VOLUME_MIN_MOUSE_MAXY; // mouse max y offset(px) relative to volumeBar when volume is min
+      this.mouseYMax = VOLUME_MIN_MOUSE_MAXY; // mouse max y offset(px) relative to volumeBar when volume is min, being equal to max `this.currentVolumeBarH`
       this.volumeState = null;
       this.mousedownFired = false;
     }
 
     init() {
       this.setState(this.normalVolumeState);
-      this.displayVolumeButton();
-      this.normalVolume();
-      this.controlVolumeButton();
+      this.displayVolumeButton(); // display different volume button
+      this.normalVolume(); // change volume to normal volume
+      this.controlVolumeButton(); // let user change volume by controling the position of drag button
 
       this.volumeButton.onclick = () => {
         if(this.mousedownFired) {
@@ -397,7 +543,7 @@
       this.volumeDragButton.onmousedown = (event1) => {
         // mousedown event will trigger click event and the click event will bubble to parents elements
         // the order in Chrome is: mousedown, mouseup, click
-        // in order to avoid click event triggered by mousedown, use flag `mousedownFired` to judge if `this.volumeButton.onclick` should happen
+        // in order to avoid click event being triggered by mousedown, use flag `mousedownFired` to judge if `this.volumeButton.onclick` should happen
         this.mousedownFired = true;
 
         Utility.addClass('draggable', this.volumeDragButton);
@@ -460,16 +606,13 @@
       // if type is given
       if(type) {
         if(type === 'normal') {
-          this.volumeUpButton.style.display = 'inline-block';
-          this.volumeDownButton.style.display = 'none';
-          this.volumeOffButton.style.display = 'none';
+          this.displayWhichVolumeBtn('up');
 
           return;
         }
+
         if(type === 'mute') {
-          this.volumeOffButton.style.display = 'inline-block';
-          this.volumeUpButton.style.display = 'none';
-          this.volumeDownButton.style.display = 'none';
+          this.displayWhichVolumeBtn('off');
 
           return;
         }
@@ -482,22 +625,18 @@
 
         this.volumeChangeRect.onmousemove = () => {
           if(this.volumeNumberValue === 0) {
-            this.volumeOffButton.style.display = 'inline-block';
-            this.volumeUpButton.style.display = 'none';
-            this.volumeDownButton.style.display = 'none';
+            this.displayWhichVolumeBtn('off');
+
             return;
           }
 
           if(this.volumeNumberValue > 0 && this.volumeNumberValue < 50) {
-            this.volumeDownButton.style.display = 'inline-block';
-            this.volumeUpButton.style.display = 'none';
-            this.volumeOffButton.style.display = 'none';
+            this.displayWhichVolumeBtn('down');
+
             return;
           }
 
-          this.volumeUpButton.style.display = 'inline-block';
-          this.volumeDownButton.style.display = 'none';
-          this.volumeOffButton.style.display = 'none';
+          this.displayWhichVolumeBtn('up');
         };
       };
 
@@ -506,6 +645,26 @@
         this.volumeChangeRect.style.visibility = 'hidden';
         this.volumeButton.style.backgroundColor = '#eee';
       };
+    }
+
+    // @param {string} type
+    //        => 'down' - volumeDownButton
+    //        => 'up' - volumeUpButton
+    //        => 'off' - volumeOffButton
+    displayWhichVolumeBtn(type) {
+      this.volumeDownButton.style.display = 'none';
+      this.volumeUpButton.style.display = 'none';
+      this.volumeOffButton.style.display = 'none';
+
+      if(type === 'down') {
+        this.volumeDownButton.style.display = 'inline-block';
+      }
+      else if(type === 'up') {
+        this.volumeUpButton.style.display = 'inline-block';
+      }
+      else if(type === 'off') {
+        this.volumeOffButton.style.display = 'inline-block';
+      }
     }
 
     // set normal volume
@@ -536,19 +695,21 @@
     // @param {[object HTMLElement]} player
     constructor(player) {
       this.player = player;
-      this.progressBar = $('.YangPlayer-playedbar');
+      this.intervalId = null; // store the ID of `window.setInterval()`
+      this.progressPlayedbar = $('.YangPlayer-playedbar');
+      this.progressBufferedbar = $('.YangPlayer-bufferedbar');
       this.playedTime = $('.YangPlayer-played-time');
       this.totalTime = $('.YangPlayer-total-time');
     }
 
     init() {
       ProgressBar.setProgressLength();
-      this.progressBarDisplay();
+      this.progressPlayedbarDisplay();
     }
 
     // set the percent width of the progress bar
     static setProgressLength() {
-      // the offsetWidth of video(controlsBar) is 0 when Safari is in fullscreen mode, so choose to use `window.innerWidth` to get its width
+      // the offsetWidth of video(controlsBar) is 0 when Safari 10 is in fullscreen mode, so choose to use `window.innerWidth` to get its width
       let controlsLength = (Utility.isWhichBrowser('Safari') && document.webkitIsFullScreen) ? window.innerWidth : Utility.outerWidth($('#YangPlayer'));
 
       let playBtnLength = Utility.outerWidth($('.YangPlayer-controlPlay-button'));
@@ -561,18 +722,42 @@
       $('.YangPlayer-progress').style.width = `${progressLength / controlsLength * 100}%`;
     }
 
-    progressBarDisplay() {
-      setInterval(() => {
-        if(this.player.played.length > 0) {
-          let playedPercent = `${Math.floor(this.player.played.end(0) / this.player.duration * 100)}%`;
+    progressPlayedbarDisplay() {
+      this.player.currentTime = 0;
+      this.progressPlayedbar.style.width = 0;
+      this.progressBufferedbar.style.width = 0;
 
-          this.progressBar.style.width = playedPercent;
-          this.progressTimeDisplay(this.player.played.end(0), this.player.duration);
+      this.intervalId = window.setInterval(() => {
+        if(this.player.currentTime > 0) {
+          let playedPercent = `${Math.floor(this.player.currentTime / this.player.duration * 100)}%`;
+
+          this.progressPlayedbar.style.display = 'block';
+          this.progressPlayedbar.style.width = playedPercent;
+          this.progressTimeDisplay(this.player.currentTime, this.player.duration);
         }
         else if(this.player.duration > 0) {
           this.progressTimeDisplay(0, this.player.duration);
         }
+
+        this.progressBufferedDisplay();
+
+        if(this.player.ended) {
+          let controlPlayObj = new ControlPlayBtn(this.player);
+
+          controlPlayObj.setReplayEventBinding(this);
+
+          window.clearInterval(this.intervalId);
+        }
       }, 1000);
+    }
+
+    progressBufferedDisplay() {
+      if(this.player.buffered.length > 0) {
+        let bufferedPercent = `${Math.floor(this.player.buffered.end(0) / this.player.duration * 100)}%`;
+
+        this.progressBufferedbar.style.display = 'block';
+        this.progressBufferedbar.style.width = bufferedPercent;
+      }
     }
 
     // @param {number(seconds)} playedTime
@@ -599,6 +784,9 @@
     constructor(player) {
       const PLAYBACK_RATE = [0.5, 1.0, 1.5, 2.0, 4.0];
 
+      this.switchOnState = new SwitchOnState(this);
+      this.switchOffState = new SwitchOffState(this);
+
       this.player = player;
       this.settingBtn = $('.YangPlayer-setting-button');
       this.settingPane = $('.YangPlayer-setting-pane');
@@ -615,9 +803,23 @@
     }
 
     init() {
-      this.loopState = false;
-      this.autoState = false;
+      this.setSwitchState(this.switchOffState, 'loop');
+      this.setSwitchState(this.switchOffState, 'auto');
 
+      this.displaySettingBtn();
+
+      this.loopSwitch.onclick = () => {
+        this.loopState.buttonWasClicked('loop');
+      };
+
+      this.autoSwitch.onclick = () => {
+        this.autoState.buttonWasClicked('auto');
+      };
+
+      this.controlPlayRate();
+    }
+
+    displaySettingBtn() {
       this.settingBtn.onmouseover = () => {
         this.settingPane.style.opacity = 1;
         this.settingPane.style.visibility = 'visible';
@@ -629,19 +831,9 @@
         this.settingPane.style.visibility = 'hidden';
         this.settingBtn.style.backgroundColor = '#eee';
       };
-
-      this.loopSwitch.onclick = () => {
-        this.loopPlay();
-      };
-
-      this.autoSwitch.onclick = () => {
-        this.autoPlay();
-      };
-
-      this.controlPlayRate();
     }
 
-    // control play rate through button
+    // control play rate by button
     controlPlayRate() {
       for(let i = 0; i < this.rateBtn.children.length; i++) {
         this.rateBtn.children[i].onclick = () => {
@@ -655,38 +847,25 @@
       }
     }
 
-    // control loop playing
-    loopPlay() {
-      if(this.loopState) {
-        this.loopState = false;
-        this.loopSwitchOff.style.display = 'inline-block';
-        this.loopSwitchOn.style.display = 'none';
-        this.player.loop = false;
-
-        return;
-      }
-
-      this.loopState = true;
+    loopPlayOn() {
       this.loopSwitchOff.style.display = 'none';
       this.loopSwitchOn.style.display = 'inline-block';
       this.player.loop = true;
+      this.setSwitchState(this.switchOnState, 'loop');
     }
 
-    // control auto playing
-    autoPlay() {
-      if(this.autoState) {
-        this.autoState = false;
-        this.autoSwitchOff.style.display = 'inline-block';
-        this.autoSwitchOn.style.display = 'none';
-        this.player.autoplay = false;
+    loopPlayOff() {
+      this.loopSwitchOff.style.display = 'inline-block';
+      this.loopSwitchOn.style.display = 'none';
+      this.player.loop = false;
+      this.setSwitchState(this.switchOffState, 'loop');
+    }
 
-        return;
-      }
-
-      this.autoState = true;
+    autoPlayOn() {
       this.autoSwitchOff.style.display = 'none';
       this.autoSwitchOn.style.display = 'inline-block';
       this.player.autoplay = true;
+      this.setSwitchState(this.switchOnState, 'auto');
 
       if(this.player.paused) {
         let player = new ControlPlayBtn(this.player);
@@ -695,9 +874,39 @@
       }
     }
 
+    autoPlayOff() {
+      this.autoSwitchOff.style.display = 'inline-block';
+      this.autoSwitchOn.style.display = 'none';
+      this.player.autoplay = false;
+      this.setSwitchState(this.switchOffState, 'auto');
+    }
+
     // @param {number} rate - playback rate
     setPlayRate(rate) {
       this.player.playbackRate = rate;
+    }
+
+    // @param {[object State]} switchState
+    // @param {string} switchType
+    //        => 'loop' - the button of looping video
+    //        => 'auto' - the button of autoplaying video
+    setSwitchState(switchState, switchType) {
+      if(switchType) {
+        if(switchType === 'loop') {
+          this.loopState = switchState;
+
+          return;
+        }
+        if(switchType === 'auto') {
+          this.autoState = switchState;
+
+          return;
+        }
+
+        throw new Error('second param "switchType" of method "setSwitchState" is incorrect!');
+      }
+      
+      throw new Error('second param "switchType" of method "setSwitchState" is not given!');
     }
   }
 
@@ -706,6 +915,7 @@
     // @param {[object HTMLElement]} player
     constructor(player) {
       this.player = player;
+      this.playerContainer = $('.YangPlayer-container');
       this.controlBar = $('.YangPlayer-control');
       this.controlBarBox = $('.YangPlayer-control-box');
       this.screenModeButton = $('.YangPlayer-screen-mode');
@@ -727,13 +937,13 @@
           // compatible with the different implementations of the Gecko and WebKit Fullscreen API
           //        => Gecko: only stretch element to fill the screen and siblings are still placed relative to fullscreen element ancestor and will be overrided by fullscreen element(z-index setting is invalid)
           //        => Webkit: stretch element but siblings seems to be placed relative to fullscreen element
-          let fullscreenElement = document.mozCancelFullScreen ? $('.YangPlayer-container') : this.player;
+          let fullscreenElement = document.mozCancelFullScreen ? this.playerContainer : this.player;
 
           this.toggle(fullscreenElement);
             // .then(
             //   function fullfilled(val) {
             //     // invalid: `ProgressBar.setProgressLength();`
-            //     // setTimeout(() => ProgressBar.setProgressLength(), 100);
+            //     // window.setTimeout(() => ProgressBar.setProgressLength(), 100);
             //   },
             //   function rejected(err) {
             //     throw new Error(err);
@@ -749,10 +959,11 @@
           // refresh progress bar when DevTool is opened and resized
           window.onresize = ProgressBar.setProgressLength;
         };
+
+        return;
       }
-      else {
-        throw new Error('Current browser doesn\'t support Fullscreen API!');
-      }
+      
+      throw new Error('Current browser doesn\'t support Fullscreen API!');
     }
 
     // return current browser supporting Fullscreen API
@@ -839,7 +1050,6 @@
         this.fullscreenButton.style.display = 'inline-block';
         this.minscreenButton.style.display = 'none';
 
-        this.controlBar.onmouseenter = null;
         this.controlBarBox.onmouseenter = null;
         this.controlBar.onmouseleave = null;
         this.controlBar.style.transition = 'none';
@@ -874,7 +1084,6 @@
         return element[request](); // requestFullscreen() method issues an `asynchronous` request to make the element be displayed full-screen
 
         // latest version of Chrome(56)/ Firefox(51) / Safari(10) not return a Promise in Fullscreen API
-        // invalid: `return element[request]();`
         // return Promise.resolve();
       }
 
@@ -890,7 +1099,6 @@
         return document[exit](); // async
 
         // latest version of Chrome(56)/ Firefox(51) / Safari(10) not return a Promise in Fullscreen API
-        // invalid: `return document[exit]();`
         // return Promise.resolve();
       }
       
@@ -927,10 +1135,10 @@
       // some important properties about YangPlayer video player
       this.YangPlayer = $('#YangPlayer');
       this.controlPlay = null; // the button controling playing and pausing
-      this.volumeButton = null; // the button controling volume in control bar
       this.progressBar = null; // the progress bar and its time bar
-      this.screenMode = null; // the button controling fullscreen and minscreen
+      this.volumeButton = null; // the button controling volume in control bar
       this.settingButton = null; // the button controling setting
+      this.screenMode = null; // the button controling fullscreen and minscreen
     }
 
     init() {

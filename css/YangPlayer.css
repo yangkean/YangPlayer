@@ -58,14 +58,30 @@
   float: left;
   margin-right: 5px;
   margin-top: 11px;
+  position: relative;
 }
 .YangPlayer-playedbar {
   background-color: #09f;
-  display: block;
+  display: none;
   height: 8px;
   width: 0;
   border-radius: 5px;
   cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 19970911;
+}
+.YangPlayer-bufferedbar {
+  background-color: #ccc;
+  display: none;
+  height: 8px;
+  width: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 .YangPlayer-time {
   display: inline-block;
@@ -161,7 +177,7 @@
 }
 .YangPlayer-setting-pane {
   width: 270px;
-  height: 160px;
+  height: 150px;
   background-color: #eee;
   position: absolute;
   right: -30px;
@@ -171,10 +187,10 @@
   transition: all .5s linear;
 }
 .YangPlayer-play-loop,
-.YanPlayer-play-auto {
+.YangPlayer-play-auto {
   width: 100%;
-  height: 50px;
-  line-height: 50px;
+  height: 35px;
+  line-height: 35px;
 }
 .YangPlayer-loop-title,
 .YangPlayer-auto-title {
@@ -194,7 +210,7 @@
 }
 .YangPlayer-playback-rate {
   width: 100%;
-  height: 100px;
+  height: 80px;
 }
 .YangPlayer-rate-title {
   margin: 0;
@@ -234,27 +250,31 @@
 .YangPlayer-minscreen {
   display: none;
 }
-.YangPlayer-play-circle {
+.YangPlayer-play-circle,
+.YangPlayer-loading,
+.YangPlayer-replay {
   position: absolute;
   left: 50%;
   top: 50%;
-  margin-top: -40px;
-  margin-left: -40px;
-  cursor: pointer;
-  color: #ccc;
   z-index: 2147483647;
-}
-.YangPlayer-play-circle {
-  display: none;
+  color: #ddd;
 }
 .YangPlayer-loading {
-  position: absolute;
-  left: 50%;
-  top: 50%;
+  display: block;
+}
+.YangPlayer-play-circle,
+.YangPlayer-replay {
+  cursor: pointer;
+  display: none;
+}
+.YangPlayer-replay {
+  margin-top: -40px;
+  margin-left: -34.29px;
+}
+.YangPlayer-play-circle,
+.YangPlayer-loading {
   margin-top: -40px;
   margin-left: -40px;
-  color: #99a2aa;
-  z-index: 2147483647;
 }
 .YangPlayer-share-btn {
   color: #fff;
