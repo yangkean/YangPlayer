@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="author" content="Sam Yang">
+  <title>YangPlayer</title>
+  <link href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/YangPlayer.min.css"/>
+  <script src="../assets/babel-polyfill/polyfill.min.js"></script>
+</head>
+<body>
+  <div class="YangPlayer-container">
+    <video id="YangPlayer" src="http://clips.vorwaerts-gmbh.de/VfE_html5.mp4" preload></video>
+  
+    <div class="YangPlayer-control-box"></div>
+    <div class="YangPlayer-control">
+      <div class="YangPlayer-controlPlay-button">
+        <div class="YangPlayer-play-button fa fa-play fa-lg"></div>
+        <div class="YangPlayer-pause-button fa fa-pause fa-lg"></div>
+      </div>
+
+      <div class="YangPlayer-progress">
+        <span class="YangPlayer-playedbar"></span>
+        <span class="YangPlayer-bufferedbar"></span>
+      </div>
+
+      <div class="YangPlayer-time">
+        <span class="YangPlayer-played-time">00:00:00</span>
+        <span class="YangPlayer-time-divider">/</span>
+        <span class="YangPlayer-total-time">00:00:00</span>
+      </div>
+      
+      <div class="YangPlayer-volume-button">
+        <div class="YangPlayer-volume-up fa fa-volume-up fa-lg"></div>
+        <div class="YangPlayer-volume-down fa fa-volume-down fa-lg"></div>
+        <div class="YangPlayer-volume-off fa fa-volume-off fa-lg"></div>
+
+        <div class="YangPlayer-volume-change">
+          <div class="YangPlayer-volume-number">50</div>
+          <div class="YangPlayer-volume-bar">
+            <div class="YangPlayer-volume-dragButton"></div>
+            <span class="YangPlayer-currentVolume-reverseBar"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="YangPlayer-setting-button fa fa-cog fa-lg">
+        <div class="YangPlayer-setting-pane">
+          <div class="YangPlayer-play-loop">
+            <p class="YangPlayer-loop-title">循环播放</p>
+
+            <div class="YangPlayer-loop-switch">
+              <div class="YangPlayer-loop-off fa fa-toggle-off fa-lg"></div>
+              <div class="YangPlayer-loop-on fa fa-toggle-on fa-lg"></div>
+            </div>
+          </div>
+
+          <div class="YangPlayer-play-auto">
+            <p class="YangPlayer-auto-title">自动播放</p>
+
+            <div class="YangPlayer-auto-switch">
+              <div class="YangPlayer-auto-off fa fa-toggle-off fa-lg"></div>
+              <div class="YangPlayer-auto-on fa fa-toggle-on fa-lg"></div>
+            </div>
+          </div>
+
+          <div class="YangPlayer-playback-rate">
+            <p class="YangPlayer-rate-title">播放速率</p>
+  
+            <div class="YangPlayer-rate-btn">
+              <div class="YangPlayer-rate-05">0.5x</div>
+              <div class="YangPlayer-rate-10">1.0x</div>
+              <div class="YangPlayer-rate-15">1.5x</div>
+              <div class="YangPlayer-rate-20">2.0x</div>
+              <div class="YangPlayer-rate-40">4.0x</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="YangPlayer-screen-mode">
+        <div class="YangPlayer-fullscreen fa fa-expand fa-lg"></div>
+        <div class="YangPlayer-minscreen fa fa-compress fa-lg"></div>
+      </div>
+    </div>
+  
+    <div class="YangPlayer-play-circle fa fa-youtube-play fa-5x"></div>
+
+    <div class="YangPlayer-loading fa fa-circle-o-notch fa-spin fa-5x"></div>
+
+    <div class="YangPlayer-replay fa fa-repeat fa-5x"></div>
+
+    <!-- <div class="YangPlayer-share-btn fa fa-share fa-2x"></div> -->
+  </div>
+  <script src="js/YangPlayer.min.js"></script>
+</body>
+</html>

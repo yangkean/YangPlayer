@@ -1,0 +1,17 @@
+{
+  "name": "yang-player",
+  "description": "a html5 video player",
+  "main": "dist/js/YangPlayer.min.js",
+  "authors": [
+    "Sam Yang"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "html5",
+    "video-player",
+    "es6"
+  ],
+  "homepage": "https://github.com/yangkean/YangPlayer",
+  "private": true,
+  "dependencies": {}
+}
