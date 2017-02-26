@@ -8,11 +8,14 @@
   <!-- build:css css/YangPlayer.min.css -->
   <link rel="stylesheet" href="css/YangPlayer.css">
   <!-- /build -->
-  <script src="../assets/babel-polyfill/polyfill.min.js"></script>
+  <!-- build:remove -->
+  <script src="../components/babel-polyfill/polyfill.min.js"></script>
+  <!-- /build -->
 </head>
 <body>
   <div class="YangPlayer-container">
     <video id="YangPlayer" src="http://clips.vorwaerts-gmbh.de/VfE_html5.mp4" preload></video>
+    <!-- <video id="YangPlayer" src="http://images.apple.com/media/us/apple-events/2016/5102cb6c_73fd_4209_960a_6201fdb29e6e/keynote/apple-event-keynote-tft-cc-us-20160908_960x400.mp4" preload></video> -->
   
     <div class="YangPlayer-control-box"></div>
     <div class="YangPlayer-control">
@@ -24,6 +27,7 @@
       <div class="YangPlayer-progress">
         <span class="YangPlayer-playedbar"></span>
         <span class="YangPlayer-bufferedbar"></span>
+        <div class="YangPlayer-progress-dragButton"></div>
       </div>
 
       <div class="YangPlayer-time">
@@ -91,6 +95,8 @@
     <div class="YangPlayer-loading fa fa-circle-o-notch fa-spin fa-5x"></div>
 
     <div class="YangPlayer-replay fa fa-repeat fa-5x"></div>
+
+    <div class="YangPlayer-error-prompt"></div>
 
     <!-- <div class="YangPlayer-share-btn fa fa-share fa-2x"></div> -->
   </div>

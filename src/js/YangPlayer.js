@@ -1,4 +1,4 @@
-;(function() {
+(function() {
   'use strict';
 
   const YangPlayer_GLOBAL = {
@@ -229,6 +229,7 @@
     constructor(classObject) {
       this.classObject = classObject;
     }
+
     buttonWasClicked() {
       throw new Error('method "buttonWasClicked" of super class must be overrided!');
     }
@@ -236,7 +237,7 @@
 
   class LoadingState extends State {
     buttonWasClicked() {
-      // todo
+      this.classObject.pauseVideo();
     }
   }
 
@@ -253,8 +254,100 @@
   }
 
   class PlayErrorState extends State {
-    buttonWasClicked() {
-      // todo
+    // @param {[object Class]} classObject - an object `new` from a kind of Class
+    constructor(classObject) {
+      const MEDIA_ERROR_CODE = {
+        abort: 1, // MediaError.MEDIA_ERR_ABORTED, the fetching process for the `media resource` was aborted by the user agent at the user's request
+        network: 2, // MediaError.MEDIA_ERR_NETWORK, a network error of some description caused the user agent to stop fetching the `media resource`, after the resource was established to be usable
+        decode: 3, // MediaError.MEDIA_ERR_DECODE, an error of some description occurred while decoding the `media resource`, after the resource was established to be usable
+        support: 4, // MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, the `media resource` indicated by the src attribute was not suitable
+      };
+      const ERROR_MESSAGE = {
+        network: '哎呀，网络好像出错了！\n刷新网页试一下:P',
+        decode: '咦，视频解码错误，\n这一定不是我的锅，\n换其他视频看看:）',
+        support: '天啦噜，视频不存在或者当前的浏览器不支持这个格式的视频:(，\n换其他视频看看',
+      };
+
+      super(classObject);
+      this.mediaErrorCode = MEDIA_ERROR_CODE;
+      this.errorMessage = ERROR_MESSAGE;
+      this.errDisplay = $('.YangPlayer-error-prompt');
+    }
+
+    // Note: here `buttonWasClicked` doesn't mean which button was clicked, and it just means something must
+    //       to be done after `PlayErrorState` state is triggered
+    buttonWasClicked(code, intervalId) {
+      this.displayErrorMsg(code, intervalId);
+    }
+
+    // @param {number} code - media error code
+    displayErrorMsg(code, intervalId) {
+      this.errDisplay.style.display = 'block';
+      this.classObject.forbidEventBinding();
+
+      for(let i in this.mediaErrorCode) {
+        if(this.mediaErrorCode[i] === code) {
+          this.errDisplay.innerHTML = this.errorMessage[i];
+          window.clearInterval(intervalId);
+        }
+      }
+    }
+  }
+
+  class NetworkState {
+    // @param {[object Class]} classObject - an object `new` from a kind of Class
+    constructor(classObject) {
+      const NETWORK_STATE_CODE = {
+        empty: 0, // HTMLMediaElement.NETWORK_EMPTY, the element has not yet been initialized. All attributes are in their initial states. The readyState is also HAVE_NOTHING
+        idle: 1, // HTMLMediaElement.NETWORK_IDLE, the element's `resource selection algorithm` is active and has selected a `resource`, but it is not actually using the network at this time
+        loading: 2, // HTMLMediaElement.NETWORK_LOADING, The user agent is actively trying to download data
+        source: 3, // HTMLMediaElement.NETWORK_NO_SOURCE, the element's `resource selection algorithm` is active, but it has not yet found a `resource` to use
+      };
+
+      this.classObject = classObject;
+      this.networkStateCode = NETWORK_STATE_CODE;
+      this.errDisplay = $('.YangPlayer-error-prompt');
+    }
+
+    // @param {number} code - network state code
+    sourceState(code, intervalId) {
+      if(code === 3) {
+        let message = '哎呀，这个视频地址的资源好像不见了！\n刷新网页或者换其他视频看看';
+
+        this.errDisplay.style.display = 'block';
+        this.classObject.forbidEventBinding();
+        this.classObject.setErrorSign();
+        this.errDisplay.innerHTML = message;
+        window.clearInterval(intervalId);
+      }
+    }
+  }
+
+  class ReadyState {
+    // @param {[object Class]} classObject - an object `new` from a kind of Class
+    constructor(classObject) {
+      const READY_STATE_CODE = {
+        nothing: 0, // HTMLMediaElement.HAVE_NOTHING, no information is available about the media resource
+        metadata: 1, // HTMLMediaElement.HAVE_METADATA, enough of the resource metadata (dimensions, track list, duration, etc) has been fetched and is available. No `media data` is available for the immediate `current playback position`
+        current: 2, // HTMLMediaElement.HAVE_CURRENT_DATA, data is available for the `current playback position`, but not enough to actually play more than one frame
+        future: 3, // HTMLMediaElement.HAVE_FUTURE_DATA, data for the `current playback position` as well as for at least a little bit of time into the future is available (in other words, at least two frames of video, for example)
+        enough: 4, // HTMLMediaElement.HAVE_ENOUGH_DATA, enough data is available—and the download rate is high enough — that the media can be played through to the end without interruption
+      };
+
+      this.classObject = classObject;
+      this.readyStateCode = READY_STATE_CODE;
+    }
+
+    // @param {number} code - ready state code
+    toggleLoadingSign(code) {
+      if(code < 3) {
+        this.classObject.setLoadingSign();
+
+        return;
+      }
+      if(code >= 3) {
+        this.classObject.playVideo();
+      }
     }
   }
 
@@ -319,7 +412,7 @@
   }
 
   // a class of control-play button
-  class ControlPlayBtn {
+  class ControlPlay {
     // @param {[object HTMLElement]} player
     constructor(player) {
       // current possible states of video player
@@ -336,6 +429,8 @@
       this.controlPlayButton = $('.YangPlayer-controlPlay-button');
       this.replayButton = $('.YangPlayer-replay');
       this.playerState = YangPlayer_GLOBAL.playerPlayState;
+      this.readyState = new ReadyState(this);
+      this.networkState = new NetworkState(this);
     }
 
     init() {
@@ -366,6 +461,66 @@
       };
     }
 
+    // @param {number} intervalId - a numeric, non-zero value which identifies the timer created by the call to setInterval()
+    listenError(intervalId) {
+      if(this.player.error) {
+        let errorCode = this.player.error.code;
+
+        if(errorCode === 1) {
+          return;
+        }
+
+        this.setErrorSign();
+        this.playerState.buttonWasClicked(errorCode, intervalId);
+      }
+    }
+
+    listenReadyState() {
+      if(!this.player.paused) {
+        let readyCode = this.player.readyState;
+
+        this.readyState.toggleLoadingSign(readyCode);
+      }
+    }
+
+    // @param {number} intervalId - a numeric, non-zero value which identifies the timer created by the call to setInterval()
+    listenNetwork(intervalId) {
+      let networkCode = this.player.networkState;
+
+      this.networkState.sourceState(networkCode, intervalId);
+    }
+
+    listenAll(intervalId) {
+      this.listenReadyState();
+      this.listenError(intervalId);
+      this.listenNetwork(intervalId);
+    }
+
+    forbidEventBinding() {
+      this.controlPlayButton.onclick = null;
+      this.player.onclick = null;
+      this.playCircle.onclick = null;
+      document.onkeydown = null;
+    }
+
+    setErrorSign() {
+      this.playLoading.style.display = 'none';
+      this.player.style.opacity = 0;
+      this.playCircle.style.display = 'none';
+      this.pauseButton.style.display = 'none';
+      this.playButton.style.display = 'inline-block';
+      this.setState(this.playErrorState);
+    }
+
+    setLoadingSign() {
+      this.playLoading.style.display = 'block';
+      this.player.style.opacity = .5;
+      this.playCircle.style.display = 'none';
+      this.pauseButton.style.display = 'inline-block';
+      this.playButton.style.display = 'none';
+      this.setState(this.loadingState);
+    }
+
     setPausingSign() {
       this.playLoading.style.display = 'none';
       this.player.style.opacity = .5;
@@ -376,6 +531,7 @@
     }
 
     setPlayingSign() {
+      this.playLoading.style.display = 'none';
       this.replayButton.style.display = 'none';
       this.playButton.style.display = 'none';
       this.pauseButton.style.display = 'inline-block';
@@ -396,6 +552,7 @@
 
     // @param {object} progressBarObj - an object `new` from Class `ProgressBars`
     replayVideo(progressBarObj) {
+      progressBarObj.progressDragButton.style.left = 0;
       progressBarObj.progressPlayedbarDisplay();
       this.playVideo();
     }
@@ -450,12 +607,31 @@
       };
     }
 
+    // Note: In Chrome 55, `MediaElement.play()` will return a promise, so it is async
     playVideo() {
+      let error = 'AbortError: The play() request was interrupted by a call to pause().';
+
       this.setPlayingSign();
 
-      this.player.play();
+      let promise = this.player.play();
+
+      promise
+      .catch((e) => {
+        // avoid Chrome `AbortError` bug
+        if(e.toString() === error) {
+          console.log('Abort `play` promise.');
+
+          return;
+        }
+        console.log(e);
+      });
     }
 
+    // Note: `MediaElement.pause()` won't return a promise and return nothing. It is not async.
+    //        If `pause()` method is triggered before the promise of `MediaElement.play()`
+    //        is resolved, it will produce an error: "The play() request was interrupted by a call to
+    //        pause()". You can use timer to delay `pause()` if you need.
+    //        Find more info here: https://html.spec.whatwg.org/multipage/embedded-content.html#dom-media-pause
     pauseVideo() {
       this.setPausingSign();
 
@@ -528,7 +704,7 @@
     controlVolumeButton(mouseYOffset) {
       let volumeDragButtonX = Number.parseInt(window.getComputedStyle(this.volumeDragButton).left);
 
-      // if mouseY is given
+      // if mouseYOffset is given
       if(mouseYOffset) {
         Utility.offset({
           top: mouseYOffset,
@@ -696,15 +872,22 @@
     constructor(player) {
       this.player = player;
       this.intervalId = null; // store the ID of `window.setInterval()`
+      this.intervalFunc = null;
+      this.progressBar = $('.YangPlayer-progress');
       this.progressPlayedbar = $('.YangPlayer-playedbar');
       this.progressBufferedbar = $('.YangPlayer-bufferedbar');
       this.playedTime = $('.YangPlayer-played-time');
       this.totalTime = $('.YangPlayer-total-time');
+      this.progressDragButton = $('.YangPlayer-progress-dragButton');
+
+      // mouse max x offset when progress is end
+      this.mouseXMax = () => (Utility.outerWidth(this.progressBar) - Utility.outerWidth(this.progressDragButton));
     }
 
     init() {
       ProgressBar.setProgressLength();
       this.progressPlayedbarDisplay();
+      this.controlProgressButton();
     }
 
     // set the percent width of the progress bar
@@ -722,33 +905,102 @@
       $('.YangPlayer-progress').style.width = `${progressLength / controlsLength * 100}%`;
     }
 
+    // control the drag button of progress bar to adjust playback position
+    // @param {number(px)} [mouseXOffset] - the x offset you need to set the drag button
+    // @param {object} [controlPlayObj] - an object `new` form Class `ControlPlay`
+    controlProgressButton(mouseXOffset, controlPlayObj) {
+      let progressDragButtonY = Number.parseInt(window.getComputedStyle(this.progressDragButton).top);
+      let controlPlayObject = controlPlayObj;
+
+      // if mouseXOffset is given
+      if(mouseXOffset) {
+        Utility.offset({
+          top: progressDragButtonY,
+          left: mouseXOffset,
+        }, this.progressDragButton);
+
+        this.progressPlayedbar.style.width = `${Utility.getOffsetLeft(this.progressDragButton) / Utility.outerWidth(this.progressBar) * 100}%`;
+
+        return;
+      }
+
+      this.progressDragButton.onmousedown = (event1) => {
+        Utility.addClass('draggable', this.progressDragButton);
+
+        this.progressDragButton.onmousemove = (event2) => {
+          // current mouse x offset
+          let mouseX = event2.pageX - (Utility.outerWidth(this.progressDragButton) / 2) - Utility.getPageX(this.progressBar);
+          // correct mouse x offset after adjusting
+          let adjustMouseX = (mouseX <= 0) ? 0 : (mouseX >= this.mouseXMax() ? this.mouseXMax() : mouseX);
+
+          Utility.offset({
+            top: progressDragButtonY,
+            left: adjustMouseX,
+          }, $('.draggable'));
+
+          this.progressPlayedbar.style.width = `${(Utility.getOffsetLeft(this.progressDragButton)) / Utility.outerWidth(this.progressBar) * 100}%`;
+
+          if(this.player.paused) {
+            controlPlayObject.playVideo();
+            this.intervalId = window.setInterval(this.intervalFunc, 1000);
+          }
+
+          // change real currentTime
+          this.player.currentTime = Utility.getOffsetLeft(this.progressDragButton) * this.player.duration / this.mouseXMax();
+
+          event2.preventDefault();
+        };
+
+        this.progressDragButton.onmouseup = (event3) => {
+          Utility.removeClass('draggable', this.progressDragButton);
+
+          this.progressDragButton.onmousemove = null; // remove mousemove event binding
+
+          event3.preventDefault();
+        };
+
+        this.progressDragButton.onmouseout = (event4) => {
+          Utility.removeClass('draggable', this.progressDragButton);
+
+          this.progressDragButton.onmousemove = null; // remove mousemove event binding
+
+          event4.preventDefault();
+        };
+
+        event1.preventDefault();
+      };
+    }
+
     progressPlayedbarDisplay() {
       this.player.currentTime = 0;
       this.progressPlayedbar.style.width = 0;
       this.progressBufferedbar.style.width = 0;
 
-      this.intervalId = window.setInterval(() => {
-        if(this.player.currentTime > 0) {
+      let controlPlayObj = new ControlPlay(this.player);
+
+      this.intervalFunc = () => {
+        if(this.player.duration > 0) {
           let playedPercent = `${Math.floor(this.player.currentTime / this.player.duration * 100)}%`;
+          let mouseXOffset = this.player.currentTime * this.mouseXMax() / this.player.duration;
 
           this.progressPlayedbar.style.display = 'block';
           this.progressPlayedbar.style.width = playedPercent;
           this.progressTimeDisplay(this.player.currentTime, this.player.duration);
-        }
-        else if(this.player.duration > 0) {
-          this.progressTimeDisplay(0, this.player.duration);
+          this.controlProgressButton(mouseXOffset, controlPlayObj);
         }
 
-        this.progressBufferedDisplay();
+        controlPlayObj.listenAll(this.intervalId);
 
         if(this.player.ended) {
-          let controlPlayObj = new ControlPlayBtn(this.player);
-
           controlPlayObj.setReplayEventBinding(this);
 
           window.clearInterval(this.intervalId);
         }
-      }, 1000);
+
+        this.progressBufferedDisplay();
+      };
+
+      this.intervalId = window.setInterval(this.intervalFunc, 1000);
     }
 
     progressBufferedDisplay() {
@@ -868,7 +1120,7 @@
       this.setSwitchState(this.switchOnState, 'auto');
 
       if(this.player.paused) {
-        let player = new ControlPlayBtn(this.player);
+        let player = new ControlPlay(this.player);
 
         player.playVideo();
       }
@@ -1143,7 +1395,7 @@
 
     init() {
       // initialize control-play button and related loading img and pausing play-circle
-      this.controlPlay = new ControlPlayBtn(this.YangPlayer);
+      this.controlPlay = new ControlPlay(this.YangPlayer);
       this.controlPlay.init();
 
       // initialize progress bar

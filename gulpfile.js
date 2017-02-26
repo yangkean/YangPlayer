@@ -12,6 +12,7 @@ const sourcemaps = require('gulp-sourcemaps');
 const eslint = require('gulp-eslint');
 const processhtml = require('gulp-processhtml');
 const babel = require('gulp-babel');
+const concat = require('gulp-concat'); // concatenates files
 
 const plugins = [
   autoprefixer({browsers: ['last 2 version']}),
@@ -59,27 +60,26 @@ gulp.task('test:scripts', function() {
 });
 
 gulp.task('build:scripts', function() {
-    return gulp.src('src/js/*.js')
+  return gulp.src('src/js/*.js')
     .pipe(babel({
       presets: ['es2015']
     }))
     .pipe(uglify())
-    .pipe(rename(function(path) {
-      path.basename += '.min';
-    }))
-    .pipe(gulp.dest('dist/js'));
+    .pipe(gulp.dest('dist/js'))
+    .on('end', function() {
+      gulp.src(['components/babel-polyfill/polyfill.min.js', 'dist/js/*.js'])
+        .pipe(concat('YangPlayer.min.js'))
+        .pipe(gulp.dest('dist/js'))
+        .on('end', () => {
+          del(['dist/js/*.js', '!dist/js/YangPlayer.min.js']);
+        });
+    });
 });
 
 gulp.task('html', function() {
   return gulp.src('src/index.html')
     .pipe(processhtml())
     .pipe(gulp.dest('dist'));
-});
-
-gulp.task('watch', function() {
-    livereload.listen();
-
-    gulp.watch(['src/**']).on('change', livereload.changed);
 });
 
 gulp.task('test', ['test:styles', 'test:scripts', 'html']);
