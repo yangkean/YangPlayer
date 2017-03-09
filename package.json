@@ -16,18 +16,14 @@
     "video-player",
     "es6"
   ],
-  "author": "Sam Yang",
+  "author": "Sam Yang (https://yangkean.com)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/yangkean/YangPlayer/issues"
   },
-  "homepage": "https://github.com/yangkean/YangPlayer#readme",
-  "bug": {
-    "url": "https://github.com/yangkean/YangPlayer/issues"
-  },
+  "homepage": "https://github.com/yangkean/YangPlayer/",
   "devDependencies": {
     "autoprefixer": "^6.7.5",
-    "babel-polyfill": "^6.23.0",
     "babel-preset-es2015": "^6.22.0",
     "cssnano": "^3.10.0",
     "del": "^2.2.2",
@@ -35,7 +31,7 @@
     "gulp-babel": "^6.1.2",
     "gulp-concat": "^2.6.1",
     "gulp-eslint": "^3.0.1",
-    "gulp-livereload": "^3.8.1",
+    "gulp-header": "^1.8.8",
     "gulp-postcss": "^6.3.0",
     "gulp-processhtml": "^1.1.0",
     "gulp-rename": "^1.2.2",

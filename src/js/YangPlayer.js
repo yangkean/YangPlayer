@@ -3,6 +3,11 @@
 
   const YangPlayer_GLOBAL = {
     playerPlayState: null, // {object} store the play state of video
+    isFullscreen: false, // {boolean}
+    controlPlay: null, // {object} `new` from Class `ControlPlay`
+    progressBar: null, // {object} `new` from Class `ProgressBar`
+    settingBtn: null, // {object} `new` from Class `SettingBtn`
+    bulletScreen: null, // {object} `new` from Class `BulletScreen`
   };
 
   // @param {string} selector - a CSS selector string
@@ -110,9 +115,9 @@
         throw new Error('second param "element" of method "addClass" is not given!');
       }
       
-      let currentClassName = element.className;
+      let currentClassName = element.className ? `${element.className} ` : '';
 
-      element.className = `${currentClassName} ${className}`;
+      element.className = `${currentClassName}${className}`;
     }
 
     // remove a class name for a html element
@@ -170,7 +175,7 @@
       return element.offsetHeight;
     }
 
-    // get the x offset of the element relative to its parent node
+    // get the x real-time offset of the element relative to its parent node
     // @param {[object HTMLElement]} element
     // @return {number(px)} x coordinate of the element
     static getOffsetLeft(element) {
@@ -178,10 +183,21 @@
         throw new Error('param "element" of method "getOffsetLeft" is not given!');
       }
       
-      return element.offsetLeft;
+      return element.parentNode ? element.getBoundingClientRect().left - element.parentNode.getBoundingClientRect().left : 0;
     }
 
-    // get the y coordinate of the element relative to its parent node
+    // get the right real-time offset of the element relative to its parent node
+    // @param {[object HTMLElement]} element
+    // @return {number(px)} right offset of the element
+    static getOffsetRight(element) {
+      if(!element) {
+        throw new Error('param "element" of method "getOffsetRight" is not given!');
+      }
+
+      return element.parentNode ? element.parentNode.getBoundingClientRect().right - element.getBoundingClientRect().right : 0;
+    }
+
+    // get the y real-time coordinate of the element relative to its parent node
     // @param {[object HTMLElement]} element
     // @return {number(px)} y coordinate of the element
     static getOffsetTop(element) {
@@ -189,10 +205,21 @@
         throw new Error('param "element" of method "getOffsetTop" is not given!');
       }
       
-      return element.offsetTop;
+      return element.parentNode ? element.getBoundingClientRect().top - element.parentNode.getBoundingClientRect().top : 0;
     }
 
-    // get the x coordinate of the element relative to document
+    // get the bottom real-time offset of the element relative to its parent node
+    // @param {[object HTMLElement]} element
+    // @return {number(px)} bottom offset of the element
+    static getOffsetBottom(element) {
+      if(!element) {
+        throw new Error('param "element" of method "getOffsetBottom" is not given!');
+      }
+      
+      return element.parentNode ? element.parentNode.getBoundingClientRect().bottom - element.getBoundingClientRect().bottom : 0;
+    }
+
+    // get the x real-time coordinate of the element relative to document
     // @param {[object HTMLElement]} element
     // @return {number(px)} x coordinate of the element
     static getPageX(element) {
@@ -207,7 +234,7 @@
       return pageX;
     }
 
-    // get the y coordinate of the element relative to document
+    // get the y real-time coordinate of the element relative to document
     // @param {[object HTMLElement]} element
     // @return {number(px)} y coordinate of the element
     static getPageY(element) {
@@ -244,12 +271,14 @@
   class PlayingState extends State {
     buttonWasClicked() {
       this.classObject.pauseVideo();
+      YangPlayer_GLOBAL.bulletScreen.controlPauseBulletScreen();
     }
   }
 
   class PausingState extends State {
     buttonWasClicked() {
       this.classObject.playVideo();
+      YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
     }
   }
 
@@ -276,19 +305,24 @@
 
     // Note: here `buttonWasClicked` doesn't mean which button was clicked, and it just means something must
     //       to be done after `PlayErrorState` state is triggered
-    buttonWasClicked(code, intervalId) {
-      this.displayErrorMsg(code, intervalId);
+    buttonWasClicked(code) {
+      this.displayErrorMsg(code);
     }
 
     // @param {number} code - media error code
-    displayErrorMsg(code, intervalId) {
+    displayErrorMsg(code) {
       this.errDisplay.style.display = 'block';
       this.classObject.forbidEventBinding();
+      this.classObject.setErrorSign();
+      YangPlayer_GLOBAL.progressBar.progressDragButton.onmousedown = null;
+      YangPlayer_GLOBAL.settingBtn.forbidEventBinding();
+      YangPlayer_GLOBAL.bulletScreen.forbidEventBinding();
+      window.clearInterval(YangPlayer_GLOBAL.progressBar.intervalId);
+      window.clearInterval(YangPlayer_GLOBAL.bulletScreen.intervalId);
 
       for(let i in this.mediaErrorCode) {
         if(this.mediaErrorCode[i] === code) {
           this.errDisplay.innerHTML = this.errorMessage[i];
-          window.clearInterval(intervalId);
         }
       }
     }
@@ -310,15 +344,19 @@
     }
 
     // @param {number} code - network state code
-    sourceState(code, intervalId) {
+    sourceState(code) {
       if(code === 3) {
         let message = '哎呀，这个视频地址的资源好像不见了！\n刷新网页或者换其他视频看看';
 
         this.errDisplay.style.display = 'block';
         this.classObject.forbidEventBinding();
         this.classObject.setErrorSign();
+        YangPlayer_GLOBAL.progressBar.progressDragButton.onmousedown = null;
+        YangPlayer_GLOBAL.settingBtn.forbidEventBinding();
+        YangPlayer_GLOBAL.bulletScreen.forbidEventBinding();
+        window.clearInterval(YangPlayer_GLOBAL.progressBar.intervalId);
+        window.clearInterval(YangPlayer_GLOBAL.bulletScreen.intervalId);
         this.errDisplay.innerHTML = message;
-        window.clearInterval(intervalId);
       }
     }
   }
@@ -342,11 +380,14 @@
     toggleLoadingSign(code) {
       if(code < 3) {
         this.classObject.setLoadingSign();
+        YangPlayer_GLOBAL.bulletScreen.ifPauseBulletScreen = false;
+        YangPlayer_GLOBAL.bulletScreen.controlPauseBulletScreen();
 
         return;
       }
       if(code >= 3) {
         this.classObject.playVideo();
+        YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
       }
     }
   }
@@ -421,7 +462,9 @@
       this.pausingState = new PausingState(this);
       this.playErrorState = new PlayErrorState(this);
 
+      YangPlayer_GLOBAL.controlPlay = this;
       this.player = player;
+      this.playerLayer = $('.YangPlayer-video-layer');
       this.playButton = $('.YangPlayer-play-button');
       this.pauseButton = $('.YangPlayer-pause-button');
       this.playCircle = $('.YangPlayer-play-circle');
@@ -441,7 +484,7 @@
           this.playerState.buttonWasClicked();
         };
 
-        this.player.onclick = () => {
+        this.playerLayer.onclick = () => {
           this.playerState.buttonWasClicked();
         };
 
@@ -449,20 +492,11 @@
           this.playerState.buttonWasClicked();
         };
 
-        document.onkeydown = (event) => {
-          let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
-          
-          if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
-            this.playerState.buttonWasClicked();
-          }
-        };
-
         this.player.oncanplaythrough = null; // remove this event binding after video first can be played through
       };
     }
 
-    // @param {number} intervalId - a numeric, non-zero value which identifies the timer created by the call to setInterval()
-    listenError(intervalId) {
+    listenError() {
       if(this.player.error) {
         let errorCode = this.player.error.code;
 
@@ -471,7 +505,7 @@
         }
 
         this.setErrorSign();
-        this.playerState.buttonWasClicked(errorCode, intervalId);
+        this.playerState.buttonWasClicked(errorCode);
       }
     }
 
@@ -483,22 +517,21 @@
       }
     }
 
-    // @param {number} intervalId - a numeric, non-zero value which identifies the timer created by the call to setInterval()
-    listenNetwork(intervalId) {
+    listenNetwork() {
       let networkCode = this.player.networkState;
 
-      this.networkState.sourceState(networkCode, intervalId);
+      this.networkState.sourceState(networkCode);
     }
 
-    listenAll(intervalId) {
+    listenAll() {
       this.listenReadyState();
-      this.listenError(intervalId);
-      this.listenNetwork(intervalId);
+      this.listenError();
+      this.listenNetwork();
     }
 
     forbidEventBinding() {
       this.controlPlayButton.onclick = null;
-      this.player.onclick = null;
+      this.playerLayer.onclick = null;
       this.playCircle.onclick = null;
       document.onkeydown = null;
     }
@@ -548,42 +581,56 @@
       this.playButton.style.display = 'inline-block';
       this.pauseButton.style.display = 'none';
       this.setState(this.pausingState);
+
+      // pause bullet screens when replay button appear
+      YangPlayer_GLOBAL.bulletScreen.ifPauseBulletScreen = false;
+      YangPlayer_GLOBAL.bulletScreen.controlPauseBulletScreen();
     }
 
-    // @param {object} progressBarObj - an object `new` from Class `ProgressBars`
-    replayVideo(progressBarObj) {
-      progressBarObj.progressDragButton.style.left = 0;
-      progressBarObj.progressPlayedbarDisplay();
+    replayVideo() {
+      this.player.load();
+      YangPlayer_GLOBAL.progressBar.progressDragButton.style.left = 0;
+      YangPlayer_GLOBAL.progressBar.progressPlayedbarDisplay();
       this.playVideo();
+
+      // remove bullet screens when press replay button
+      for(let userId in YangPlayer_GLOBAL.bulletScreen.userIdCollection) {
+        YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId].parentNode.removeChild(YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId]);
+        window.clearTimeout(YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId]);
+
+        delete YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId];
+        delete YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId];
+      }
     }
 
-    // @param {object} progressBarObj - an object `new` from Class `ProgressBars`
-    setReplayEventBinding(progressBarObj) {
+    setReplayEventBinding() {
       this.setReplayPausingSign();
 
       this.controlPlayButton.onclick = () => {
-        this.replayVideo(progressBarObj);
+        this.replayVideo(YangPlayer_GLOBAL.progressBar);
         this.restoreDefaultBinding();
       };
 
       this.replayButton.onclick = () => {
-        this.replayVideo(progressBarObj);
+        this.replayVideo(YangPlayer_GLOBAL.progressBar);
         this.restoreDefaultBinding();
       };
 
-      this.player.onclick = () => {
-        this.replayVideo(progressBarObj);
+      this.playerLayer.onclick = () => {
+        this.replayVideo(YangPlayer_GLOBAL.progressBar);
         this.restoreDefaultBinding();
       };
 
-      document.onkeydown = (event) => {
-        let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
-          
-        if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
-          this.replayVideo(progressBarObj);
-          this.restoreDefaultBinding();
-        }
-      };
+      if(YangPlayer_GLOBAL.isFullscreen) {
+        document.onkeydown = (event) => {
+          let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
+            
+          if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
+            this.replayVideo(YangPlayer_GLOBAL.progressBar);
+            this.restoreDefaultBinding();
+          }
+        };
+      }
     }
 
     // restore default playing or pausing binding after replayBtn was clicked
@@ -594,17 +641,19 @@
 
       this.replayButton.onclick = null;
 
-      this.player.onclick = () => {
+      this.playerLayer.onclick = () => {
         this.playerState.buttonWasClicked();
       };
 
-      document.onkeydown = (event) => {
-        let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
-        
-        if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
-          this.playerState.buttonWasClicked();
-        }
-      };
+      if(YangPlayer_GLOBAL.isFullscreen) {
+        document.onkeydown = (event) => {
+          let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
+          
+          if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
+            this.playerState.buttonWasClicked();
+          }
+        };
+      }
     }
 
     // Note: In Chrome 55, `MediaElement.play()` will return a promise, so it is async
@@ -702,7 +751,7 @@
     // control the drag button of volume to adjust volume
     // @param {number(px)} [mouseYOffset] - the y offset you need to set the drag button
     controlVolumeButton(mouseYOffset) {
-      let volumeDragButtonX = Number.parseInt(window.getComputedStyle(this.volumeDragButton).left);
+      let volumeDragButtonX = Utility.getOffsetLeft(this.volumeDragButton);
 
       // if mouseYOffset is given
       if(mouseYOffset) {
@@ -870,6 +919,7 @@
   class ProgressBar {
     // @param {[object HTMLElement]} player
     constructor(player) {
+      YangPlayer_GLOBAL.progressBar = this;
       this.player = player;
       this.intervalId = null; // store the ID of `window.setInterval()`
       this.intervalFunc = null;
@@ -907,10 +957,8 @@
 
     // control the drag button of progress bar to adjust playback position
     // @param {number(px)} [mouseXOffset] - the x offset you need to set the drag button
-    // @param {object} [controlPlayObj] - an object `new` form Class `ControlPlay`
-    controlProgressButton(mouseXOffset, controlPlayObj) {
-      let progressDragButtonY = Number.parseInt(window.getComputedStyle(this.progressDragButton).top);
-      let controlPlayObject = controlPlayObj;
+    controlProgressButton(mouseXOffset) {
+      let progressDragButtonY = Utility.getOffsetTop(this.progressDragButton);
 
       // if mouseXOffset is given
       if(mouseXOffset) {
@@ -941,9 +989,12 @@
           this.progressPlayedbar.style.width = `${(Utility.getOffsetLeft(this.progressDragButton)) / Utility.outerWidth(this.progressBar) * 100}%`;
 
           if(this.player.paused) {
-            controlPlayObject.playVideo();
+            YangPlayer_GLOBAL.controlPlay.playVideo();
             this.intervalId = window.setInterval(this.intervalFunc, 1000);
           }
+
+          // remove all bullet screens when mousedown and mousemove
+          YangPlayer_GLOBAL.bulletScreen.removeAllBulletScreen();
 
           // change real currentTime
           this.player.currentTime = Utility.getOffsetLeft(this.progressDragButton) * this.player.duration / this.mouseXMax();
@@ -956,6 +1007,10 @@
 
           this.progressDragButton.onmousemove = null; // remove mousemove event binding
 
+          if(!YangPlayer_GLOBAL.bulletScreen.intervalId && YangPlayer_GLOBAL.bulletScreen.bulletScreenState) {
+            YangPlayer_GLOBAL.bulletScreen.intervalId = window.setInterval(YangPlayer_GLOBAL.bulletScreen.intervalFunc, 1000);
+          }
+
           event3.preventDefault();
         };
 
@@ -963,6 +1018,10 @@
           Utility.removeClass('draggable', this.progressDragButton);
 
           this.progressDragButton.onmousemove = null; // remove mousemove event binding
+
+          if(!YangPlayer_GLOBAL.bulletScreen.intervalId && YangPlayer_GLOBAL.bulletScreen.bulletScreenState) {
+            YangPlayer_GLOBAL.bulletScreen.intervalId = window.setInterval(YangPlayer_GLOBAL.bulletScreen.intervalFunc, 1000);
+          }
 
           event4.preventDefault();
         };
@@ -976,8 +1035,6 @@
       this.progressPlayedbar.style.width = 0;
       this.progressBufferedbar.style.width = 0;
 
-      let controlPlayObj = new ControlPlay(this.player);
-
       this.intervalFunc = () => {
         if(this.player.duration > 0) {
           let playedPercent = `${Math.floor(this.player.currentTime / this.player.duration * 100)}%`;
@@ -986,13 +1043,13 @@
           this.progressPlayedbar.style.display = 'block';
           this.progressPlayedbar.style.width = playedPercent;
           this.progressTimeDisplay(this.player.currentTime, this.player.duration);
-          this.controlProgressButton(mouseXOffset, controlPlayObj);
+          this.controlProgressButton(mouseXOffset);
         }
 
-        controlPlayObj.listenAll(this.intervalId);
+        YangPlayer_GLOBAL.controlPlay.listenAll();
 
         if(this.player.ended) {
-          controlPlayObj.setReplayEventBinding(this);
+          YangPlayer_GLOBAL.controlPlay.setReplayEventBinding();
 
           window.clearInterval(this.intervalId);
         }
@@ -1039,6 +1096,7 @@
       this.switchOnState = new SwitchOnState(this);
       this.switchOffState = new SwitchOffState(this);
 
+      YangPlayer_GLOBAL.settingBtn = this;
       this.player = player;
       this.settingBtn = $('.YangPlayer-setting-button');
       this.settingPane = $('.YangPlayer-setting-pane');
@@ -1069,6 +1127,11 @@
       };
 
       this.controlPlayRate();
+    }
+
+    forbidEventBinding() {
+      this.loopSwitch.onclick = null;
+      this.autoSwitch.onclick = null;
     }
 
     displaySettingBtn() {
@@ -1120,9 +1183,8 @@
       this.setSwitchState(this.switchOnState, 'auto');
 
       if(this.player.paused) {
-        let player = new ControlPlay(this.player);
-
-        player.playVideo();
+        YangPlayer_GLOBAL.controlPlay.playVideo();
+        YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
       }
     }
 
@@ -1182,7 +1244,11 @@
       if(ScreenMode.getBrowserSupportObj()) {
         // make these properties function in order to get their real-time values
         this.fullscreenElement = () => document[ScreenMode.getBrowserSupportObj().fullscreenElement];
-        this.isFullscreen = () => Boolean(this.fullscreenElement());
+        this.isFullscreen = () => {
+          YangPlayer_GLOBAL.isFullscreen = Boolean(this.fullscreenElement());
+
+          return YangPlayer_GLOBAL.isFullscreen;
+        };
         this.fullscreenEnabled = () => document[ScreenMode.getBrowserSupportObj().fullscreenEnabled];
 
         this.screenModeButton.onclick = () => {
@@ -1279,7 +1345,7 @@
       return false;
     }
 
-    // trigger callback when the fullscreen state of the page changes
+    // trigger callback when the fullscreen state of the player changes
     // @param {function} callback
     onfullscreenchange(callback) {
       if(ScreenMode.getBrowserSupportObj()) {
@@ -1287,7 +1353,31 @@
         let callbackAdd = () => {
           callback();
 
+          if(this.isFullscreen()) {
+            document.onkeydown = (event) => {
+              let keyCode = event.key || event.keyCode; // be careful that `event.keyCode` has been removed from the Web standards
+
+              if(keyCode === ' ' || keyCode === 32) { // the Unicode vaule of `Space`
+                YangPlayer_GLOBAL.playerPlayState.buttonWasClicked();
+              }
+            };
+          }
+          else {
+            document.onkeydown = null;
+          }
+
           this.notOverControlBar();
+
+          // correct bullet screens offset distance when the fullscreen state of the player changes
+          // and own properties exist in `YangPlayer_GLOBAL.bulletScreen.userIdCollection`
+          for(let i in YangPlayer_GLOBAL.bulletScreen.userIdCollection) {
+            if(!this.player.paused) {
+              YangPlayer_GLOBAL.bulletScreen.ifPauseBulletScreen = true;
+              YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
+
+              break;
+            }
+          }
         };
 
         return (document[change] = callbackAdd);
@@ -1348,6 +1438,7 @@
 
         this.fullscreenButton.style.display = 'inline-block';
         this.minscreenButton.style.display = 'none';
+
         return document[exit](); // async
 
         // latest version of Chrome(56)/ Firefox(51) / Safari(10) not return a Promise in Fullscreen API
@@ -1372,12 +1463,511 @@
 
   // a class control `bullet screen`
   class BulletScreen {
-    constructor() {
-      // todo
+    // @param {[object HTMLElement]} player
+    constructor(player) {
+      const FONT_SIZE = ['1em', '1.5em', '2em'];
+      const BULLET_SCREEN_STYLE = ['top', 'move'];
+      const TRANSITION_RATE_SCALE = 5 / 984; // use to transform rate of bullet screens according to different distance
+      const BASE_ADD_HEIGHT = 37; // unit: px
+
+      YangPlayer_GLOBAL.bulletScreen = this;
+      this.player = player;
+      this.intervalId = null;
+      this.intervalFunc = null;
+      this.bulletScreenPool = $('.YangPlayer-bulletScreen-pool');
+      this.bulletScrenRect = $('.YangPlayer-bullet-screen');
+      this.colorBox = $('.YangPlayer-color-box');
+      this.colorPane = $('.YangPlayer-color-pane');
+      this.colorValue = $('.YangPlayer-color-value');
+      this.slider = $('#slider');
+      this.picker = $('#picker');
+      this.modePane = $('.YangPlayer-mode-pane');
+      this.bulletScreenText = $('.YangPlayer-bulletScreen-text');
+      this.bulletScreenSend = $('.YangPlayer-bulletScreen-send');
+      this.bulletScreenColor = $('.YangPlayer-bulletScreen-color');
+      this.bulletScreenMode = $('.YangPlayer-bulletScreen-mode');
+      this.bulletScreenSwitch = $('.YangPlayer-bulletScreen-switch');
+      this.bulletScreenOn = $('.YangPlayer-bulletScreen-on');
+      this.bulletScreenOff = $('.YangPlayer-bulletScreen-off');
+      this.turnOffLight = $('.YangPlayer-turnOff-light');
+      this.fontSize = FONT_SIZE;
+      this.bulletScreenStyle = BULLET_SCREEN_STYLE;
+      this.transitionRateScale = TRANSITION_RATE_SCALE;
+      this.baseAddHeight = BASE_ADD_HEIGHT;
+      this.sendData = {
+        url: null,
+        userId: '',
+        fontSize: '1.5em',
+        mode: 'move',
+        color: '#fff',
+        message: '',
+        playTime: 0,
+        date: '',
+      };
+      this.timeoutIdCollection = {}; // store all timeout ids of `window.setTimeout()` that has not finished
+      this.timeoutId = null; // store each timeout id
+      this.userIdCollection = {}; // store all `div` bullet screens that have not finished
+      this.ifPauseBulletScreen = false;
+      this.playTimeCollection = new Map();
+      this.bulletScreenState = true; // `true` if bullet screens is open, otherwise `false`
+      this.light = true; // `true` if turn on light, otherwise `false`
     }
 
-    init() {
-      // todo
+    init(url) {
+      this.setUrl(url);
+
+      this.setColorPicker();
+      this.setModePane();
+      this.ajax(this.sendData); // get bullet screens
+
+      this.sendBulletScreen();
+      this.controlBulletScreenSwitch();
+      this.controlLight();
+    }
+
+    controlLight() {
+      this.turnOffLight.onclick = () => {
+        if(this.light) {
+          this.light = false;
+          document.body.style.backgroundColor = '#000';
+          $('.YangPlayer-container').style.boxShadow = '0 0 5px #fff';
+        }
+        else {
+          this.light = true;
+          document.body.style.backgroundColor = 'inherit';
+          $('.YangPlayer-container').style.boxShadow = 'none';
+        }
+      };
+    }
+
+    controlBulletScreenSwitch() {
+      this.bulletScreenOn.onclick = () => {
+        this.bulletScreenOn.style.display = 'none';
+        this.bulletScreenOff.style.display = 'inline-block';
+        this.openBulletScreen();
+        this.bulletScreenState = true;
+      };
+
+      this.bulletScreenOff.onclick = () => {
+        this.bulletScreenOn.style.display = 'inline-block';
+        this.bulletScreenOff.style.display = 'none';
+        this.closeBulletScreen();
+        this.bulletScreenState = false;
+      };
+    }
+
+    closeBulletScreen() {
+      this.removeAllBulletScreen();
+      this.bulletScreenSend.onclick = null;
+    }
+
+    openBulletScreen() {
+      this.setMessage('');
+      this.ajax(this.sendData);
+      this.sendBulletScreen();
+    }
+
+    forbidEventBinding() {
+      this.bulletScreenSend.onclick = null;
+      this.bulletScreenOn.onclick = null;
+      this.bulletScreenOff.onclick = null;
+    }
+
+    // color picker pane
+    setColorPicker() {
+      this.bulletScreenColor.onmouseover = () => {
+        this.colorBox.style.visibility = 'visible';
+        this.colorBox.style.opacity = '1';
+      };
+
+      this.bulletScreenColor.onmouseout = () => {
+        this.colorBox.style.visibility = 'hidden';
+        this.colorBox.style.opacity = '0';
+      };
+
+      this.colorValue.value = 'fff';
+
+      // use [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker)
+      ColorPicker(this.slider, this.picker, (hex) => {
+        this.colorValue.value = hex.match(/#([0-9a-zA-Z]+)/)[1];
+        this.colorPane.style.backgroundColor = hex;
+        this.setColor(hex);
+      });
+
+      this.colorValue.oninput = () => {
+        let color = `#${this.colorValue.value.match(/([0-9a-zA-Z]+)/)[1]}`;
+
+        this.colorPane.style.backgroundColor = color;
+        this.setColor(color);
+      };
+    }
+
+    setModePane() {
+      this.bulletScreenMode.onmouseover = () => {
+        this.modePane.style.visibility = 'visible';
+        this.modePane.style.opacity = '1';
+      };
+
+      this.bulletScreenMode.onmouseout = () => {
+        this.modePane.style.visibility = 'hidden';
+        this.modePane.style.opacity = '0';
+      };
+
+      this.setFontSize();
+      this.setMode();
+    }
+
+    // @param {[object HTMLElement]} item - top bullet screen `div` element
+    renderTopBulletScreen(item) {
+      Utility.addClass('YangPlayer-bulletScreen-top', item);
+
+      this.bulletScreenPool.append(item);
+      item.style.marginLeft = `-${Utility.outerWidth(item) / 2}px`;
+
+      if(!this.player.paused) {
+        this.timeoutId = window.setTimeout(() => {
+          if(item.parentNode) {
+            item.parentNode.removeChild(item);
+          }
+
+          for(let userId in this.userIdCollection) {
+            if(userId === item.getAttribute('data-id')) {
+              delete this.userIdCollection[userId];
+              delete this.timeoutIdCollection[userId];
+
+              break;
+            }
+          }
+        }, 4000);
+
+        this.timeoutIdCollection[item.getAttribute('data-id')] = this.timeoutId;
+      }
+    }
+
+    // control pausing of bullet screens
+    controlPauseBulletScreen() {
+      // top bullet screens
+      for(let userId in this.timeoutIdCollection) {
+        window.clearTimeout(this.timeoutIdCollection[userId]);
+
+        delete this.timeoutIdCollection[userId];
+      }
+
+      // moving bullet screens
+      if(!this.ifPauseBulletScreen) {
+        for(let userId in this.userIdCollection) {
+          this.ifPauseBulletScreen = true;
+
+          if(this.userIdCollection[userId].className === 'YangPlayer-bulletScreen-move') {
+            this.userIdCollection[userId].style.transition = 'transform 0s linear';
+            this.userIdCollection[userId].style.transform = `translateX(-${Utility.outerWidth(this.userIdCollection[userId]) + Utility.getOffsetRight(this.userIdCollection[userId])}px)`;
+          }
+        }
+      }
+    }
+
+    // control continuing of bullet screens after pause bullet screens
+    controlContinueBulletScreen() {
+      if(this.ifPauseBulletScreen) {
+        for(let userId in this.userIdCollection) {
+          this.ifPauseBulletScreen = false;
+
+          if(this.userIdCollection[userId].className === 'YangPlayer-bulletScreen-move') {
+            this.userIdCollection[userId].style.transition = `transform ${(Utility.outerWidth(this.bulletScreenPool) - Utility.getOffsetRight(this.userIdCollection[userId])) * this.transitionRateScale}s linear`;
+            this.userIdCollection[userId].style.transform = `translateX(-${Utility.outerWidth(this.bulletScreenPool) + Utility.outerWidth(this.userIdCollection[userId])}px)`;
+          }
+
+          if(this.userIdCollection[userId].className === 'YangPlayer-bulletScreen-top') {
+            let timeoutFunc = () => {
+              if(this.userIdCollection[userId]) {
+                this.userIdCollection[userId].parentNode.removeChild(this.userIdCollection[userId]);
+              }
+
+              delete this.userIdCollection[userId];
+              delete this.timeoutIdCollection[userId];
+            };
+
+            this.timeoutId = window.setTimeout(timeoutFunc, 2000);
+
+            this.timeoutIdCollection[userId] = this.timeoutId;
+          }
+        }
+      }
+    }
+
+    // remove moving bullet screens after they disappear
+    removeMovingBulletScreen() {
+      for(let userId in this.userIdCollection) {
+        let canRemoveMovingBulletScreen = this.userIdCollection[userId].className === 'YangPlayer-bulletScreen-move' && Utility.getOffsetRight(this.userIdCollection[userId]) >= Utility.outerWidth(this.bulletScreenPool);
+
+        if(canRemoveMovingBulletScreen) {
+          this.userIdCollection[userId].parentNode.removeChild(this.userIdCollection[userId]);
+
+          delete this.userIdCollection[userId];
+        }
+      }
+    }
+
+    // remove all bullet screens at once and forbid the creation of bullet screens
+    removeAllBulletScreen() {
+      window.clearInterval(this.intervalId);
+      this.intervalId = null;
+
+      for(let userId in this.userIdCollection) {
+        this.userIdCollection[userId].parentNode.removeChild(this.userIdCollection[userId]);
+        window.clearTimeout(this.timeoutIdCollection[userId]);
+
+        delete this.userIdCollection[userId];
+        delete this.timeoutIdCollection[userId];
+      }
+    }
+
+    // @param {[object HTMLElement]} item - moving bullet screen `div` element
+    renderMovingBulletScreen(item) {
+      Utility.addClass('YangPlayer-bulletScreen-move', item);
+
+      this.bulletScreenPool.append(item);
+      item.style.right = `-${Utility.outerWidth(item)}px`;
+
+      if(!this.player.paused) {
+        item.style.transition = `transform ${(Utility.outerWidth(this.bulletScreenPool) + Utility.outerWidth(item)) * this.transitionRateScale}s linear`;
+        item.style.transform = `translateX(-${Utility.outerWidth(this.bulletScreenPool) + Utility.outerWidth(item)}px)`;
+      }
+    }
+
+    // render data with the return data of `this.ajax()`
+    // @param {[object Array]} data - about bullet screen information
+    renderBulletScreen(data) {
+      this.intervalFunc = () => {
+        for(let i = 0; i < data.length; i++) {
+          let playTime = Number.parseInt(data[i].playTime);
+          let playerCurrentTime = Number.parseInt(this.player.currentTime);
+          let userId = data[i].userId;
+          let canCreateBulletScreen = playTime === playerCurrentTime && !this.player.paused && !this.userIdCollection.hasOwnProperty(userId);
+
+          if(canCreateBulletScreen) {
+            let fontSize = data[i].fontSize;
+            let mode = data[i].mode;
+            let color = data[i].color;
+            let message = data[i].message;
+            let item = document.createElement('div');
+            let content = document.createTextNode(message);
+
+            item.appendChild(content);
+            item.style.fontSize = fontSize;
+            item.style.color = color;
+            item.setAttribute('data-id', userId);
+            this.userIdCollection[userId] = item;
+            this.playTimeCollection.set(userId, {mode: mode, playTime: playTime, });
+
+            if(mode === 'top') {
+              this.renderTopBulletScreen(item);
+            }
+
+            if(mode === 'move') {
+              this.renderMovingBulletScreen(item);
+            }
+
+            // add top offset if many bullet screens appear at the same time
+            for(let j = 0; j < i; j++) {
+              let otherPlayTime = Number.parseInt(data[j].playTime);
+              let otherMode = data[j].mode;
+
+              if(otherPlayTime === playerCurrentTime && otherMode === mode) {
+                item.style.top = `${Utility.getOffsetTop(item) + this.baseAddHeight}px`;
+              }
+            }
+          }
+        }
+
+        this.removeMovingBulletScreen();
+      };
+
+      if(this.bulletScreenState) {
+        this.intervalId = this.intervalId ? (window.clearInterval(this.intervalId) && window.setInterval(this.intervalFunc, 1000)) : window.setInterval(this.intervalFunc, 1000);
+      }
+    }
+
+    // what would do after `this.ajax()` failed
+    failSend() {
+      console.log('sending bullet screens fail.');
+    }
+
+    sendBulletScreen() {
+      this.bulletScreenSend.onclick = () => {
+        let message = this.bulletScreenText.value.trim();
+        let date = (new Date()).toLocaleString();
+
+        if(message) {
+          this.setMessage(message);
+          this.setPlayTime(this.player.currentTime);
+          this.setDate(date);
+          this.setUserId();
+
+          this.firstSendRender(this.sendData);
+          this.ajax(this.sendData, this.renderBulletScreen, this.failSend);
+        }
+      };
+    }
+
+    // @param {object} data - the same as this.sendData
+    firstSendRender(data) {
+      this.bulletScreenText.value = '';
+
+      let userId = data.userId;
+      let fontSize = data.fontSize;
+      let mode = data.mode;
+      let color = data.color;
+      let message = data.message;
+      let playTime = data.playTime;
+      let item = document.createElement('div');
+      let content = document.createTextNode(message);
+
+      item.appendChild(content);
+      item.style.fontSize = fontSize;
+      item.style.color = color;
+      item.style.border = '1px solid #fff';
+      item.style.padding = '1px';
+      item.setAttribute('data-id', userId);
+      this.userIdCollection[userId] = item;
+
+      if(mode === 'top') {
+        this.renderTopBulletScreen(item);
+      }
+
+      if(mode === 'move') {
+        this.renderMovingBulletScreen(item);
+      }
+
+      // add top offset if many bullet screens appear at the same time
+      for(let obj of this.playTimeCollection.values()) {
+        if(obj.mode === mode && obj.playTime === playTime) {
+          item.style.top = `${Utility.getOffsetTop(item) + this.baseAddHeight}px`;
+        }
+      }
+
+      // send bullet screens at the beginning
+      if(this.player.paused) {
+        this.ifPauseBulletScreen = true;
+      }
+    }
+
+    // @param {string} url - the url address sent to
+    setUrl(url) {
+      this.sendData.url = url;
+    }
+
+    setFontSize() {
+      let fontBtn = $('.YangPlayer-font-btn');
+
+      for(let i = 0; i < fontBtn.children.length; i++) {
+        fontBtn.children[i].onclick = () => {
+          for(let j = 0; j < fontBtn.children.length; j++) {
+            fontBtn.children[j].style.opacity = .4;
+          }
+
+          fontBtn.children[i].style.opacity = 1;
+          this.sendData.fontSize = this.fontSize[i];
+        };
+      }
+    }
+
+    // Note: here just use `Date.now()` to distinguish the same bullet screen from different user.
+    //       In production you should use real user id
+    setUserId() {
+      this.sendData.userId = String(Date.now());
+    }
+
+    setMode() {
+      let styleBtn = $('.YangPlayer-style-btn');
+
+      for(let i = 0; i < styleBtn.children.length; i++) {
+        styleBtn.children[i].onclick = () => {
+          for(let j = 0; j < styleBtn.children.length; j++) {
+            styleBtn.children[j].style.opacity = .4;
+          }
+
+          styleBtn.children[i].style.opacity = 1;
+          this.sendData.mode = this.bulletScreenStyle[i];
+        };
+      }
+    }
+
+    // @param {string} color - a hex color value
+    setColor(color) {
+      this.sendData.color = color;
+    }
+
+    // @param {string} message - the message user inputed
+    setMessage(message) {
+      this.sendData.message = message;
+    }
+
+    // @param {number(s)} playTime - the player currentTime when user sent the message
+    setPlayTime(playTime) {
+      this.sendData.playTime = Number.parseInt(playTime);
+    }
+
+    // @param {string} date - the date when user sent the message
+    setDate(date) {
+      this.sendData.date = date;
+    }
+
+    // create an ajax request
+    // @param {object} [data] - an object containing following properties
+    //        => {string} url - the url address sent to
+    //        => {string} fontSize - three types: '1em'(little), '1.5em'(middle), '2em'(big)
+    //        => {string} userId - distinguish different user
+    //        => {string} mode - two types: 'top', 'move'
+    //        => {string} color - a hex color value
+    //        => {string} message - the message user inputed
+    //        => {number} playTime - the player currentTime when user sent the message
+    //        => {string} date - the date when user sent the message
+    // @return {object} a object containing following properties
+    //        => {boolean} sendSuccess - `true` if ajax function successed, otherwise `false`
+    //        => {array} bulletScreenContent - contain all bulletScreen objects. Each object contains following properties
+    //                => {string} fontSize - three types: '1em'(little), '1.5em'(middle), '2em'(big)
+    //                => {string} userId - distinguish different user
+    //                => {string} mode - two types: 'top', 'move'
+    //                => {string} color - a hex color value
+    //                => {string} message - the message user inputed
+    //                => {number} playTime - the player currentTime when user sent the message
+    //                => {string} date - the date when user sent the message
+    ajax(data) {
+      let xhr = new XMLHttpRequest();
+      let xhrUrl = data.url;
+
+      if(!!data.fontSize && !!data.userId && !!data.mode && !!data.color && !!data.message && !!data.date) {
+        let fd = new FormData();
+
+        fd.append('fontSize', data.fontSize);
+        fd.append('userId', data.userId);
+        fd.append('mode', data.mode);
+        fd.append('color', data.color);
+        fd.append('message', data.message);
+        fd.append('playTime', data.playTime);
+        fd.append('date', data.date);
+
+        xhr.open('post', xhrUrl, true);
+        xhr.send(fd);
+      }
+      else {
+        xhr.open('get', xhrUrl, true);
+        xhr.send();
+      }
+
+      xhr.onreadystatechange = () => {
+        if(xhr.readyState === 4 && xhr.status === 200) {
+          let returnData = JSON.parse(xhr.responseText);
+
+          if(returnData.sendSuccess) {
+            this.renderBulletScreen(returnData.bulletScreenContent);
+          }
+          else {
+            this.failSend();
+          }
+        }
+      };
     }
   }
 
@@ -1386,11 +1976,12 @@
     constructor() {
       // some important properties about YangPlayer video player
       this.YangPlayer = $('#YangPlayer');
-      this.controlPlay = null; // the button controling playing and pausing
+      this.controlPlay = null; // control video playing and pausing
       this.progressBar = null; // the progress bar and its time bar
       this.volumeButton = null; // the button controling volume in control bar
       this.settingButton = null; // the button controling setting
       this.screenMode = null; // the button controling fullscreen and minscreen
+      this.bulletScreen = null; // control sending `bullet screen`
     }
 
     init() {
@@ -1413,6 +2004,10 @@
       // initialize screen mode button
       this.screenMode = new ScreenMode(this.YangPlayer);
       this.screenMode.init();
+
+      // initialize bullet screen rect
+      this.bulletScreen = new BulletScreen(this.YangPlayer);
+      this.bulletScreen.init('http://localhost/~yangshao/bulletScreen.php');
     }
   }
 

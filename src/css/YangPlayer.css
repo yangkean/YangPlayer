@@ -4,12 +4,25 @@
   background-color: #000;
   margin: 0;
   padding: 0;
-  position: relative;
+  position: absolute;
+  left: 300px;
+  top: 150px;
+}
+.YangPlayer-container input:focus {
+  outline: none;
 }
 #YangPlayer {
   width: 100%;
   height: 100%;
   cursor: pointer;
+}
+.YangPlayer-video-layer {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2147483647;
 }
 .YangPlayer-control-box {
   width: 100%;
@@ -52,7 +65,6 @@
   border-radius: 5px;
   width: 350px;
   height: 8px;
-  line-height: 30px;
   display: inline-block;
   cursor: pointer;
   float: left;
@@ -104,7 +116,6 @@
   margin-right: 5px;
   float: left;
   width: 136px;
-  height: 30px;
   text-align: center;
 }
 .YangPlayer-volume-button {
@@ -195,6 +206,7 @@
   position: absolute;
   right: -30px;
   bottom: 30px;
+  color: #888;
   box-shadow: 0 0 5px #999;
   visibility: hidden;
   transition: all .5s linear;
@@ -202,7 +214,6 @@
 .YangPlayer-play-loop,
 .YangPlayer-play-auto {
   width: 100%;
-  height: 35px;
   line-height: 35px;
 }
 .YangPlayer-loop-title,
@@ -220,10 +231,6 @@
 .YangPlayer-loop-on,
 .YangPlayer-auto-on {
   display: none;
-}
-.YangPlayer-playback-rate {
-  width: 100%;
-  height: 80px;
 }
 .YangPlayer-rate-title {
   margin: 0;
@@ -262,6 +269,199 @@
 }
 .YangPlayer-minscreen {
   display: none;
+}
+.YangPlayer-bullet-screen {
+  width: 100%;
+  height: 40px;
+  visibility: visible;
+  background-color: #eee;
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  z-index: 2147483647;
+  border-top: 1px solid #ddd;
+}
+.YangPlayer-bulletScreen-pool {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  z-index: 2147483647;
+}
+.YangPlayer-bulletScreen-top,
+.YangPlayer-bulletScreen-move {
+  position: absolute;
+  text-shadow: 1px 0 1px #000, 0 1px 1px #000, -1px 0 1px #000, 0 -1px 1px #000;
+  top: 10px;
+  line-height: 32px;
+}
+.YangPlayer-bulletScreen-top {
+  left: 50%;
+  z-index: 1;
+}
+.YangPlayer-bulletScreen-move {
+  transition: transform 0s linear;
+  word-break: keep-all;
+}
+.YangPlayer-bulletScreen-text {
+  width: 390px;
+  height: 26px;
+  font-size: .9em;
+  border: none;
+  padding: 0;
+  position: absolute;
+  left: 100px;
+  top: 7px;
+  padding-left: 10px;
+}
+.YangPlayer-bulletScreen-send,
+.YangPlayer-bulletScreen-color,
+.YangPlayer-bulletScreen-mode,
+.YangPlayer-bulletScreen-on,
+.YangPlayer-bulletScreen-off,
+.YangPlayer-turnOff-light {
+  position: absolute;
+  line-height: 40px;
+  cursor: pointer;
+  color: #888;
+}
+.YangPlayer-bulletScreen-send {
+  left: 510px;
+}
+.YangPlayer-bulletScreen-color {
+  left: 20px;
+}
+.YangPlayer-color-box {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  background-color: #eee;
+  width: 220px;
+  height: 150px;
+  left: 10px;
+  bottom: 40px;
+  box-shadow: 0 0 5px #999;
+  transition: all .5s linear;
+}
+.YangPlayer-color-pane {
+  position: absolute;
+  left: 30px;
+  top: 10px;
+  width: 50px;
+  height: 20px;
+  background-color: #fff;
+  border: 1px solid #F0F8FF;
+  border-radius: 5px;
+}
+.YangPlayer-color-pane:after {
+  content: '#';
+  position: absolute;
+  left: 72px;
+  top: 1px;
+  color: #000;
+  font-size: .7em;
+  line-height: 22px;
+  z-index: 1;
+}
+.YangPlayer-color-value {
+  width: 80px;
+  height: 20px;
+  position: absolute;
+  left: 100px;
+  top: 10px;
+  border: 1px solid #F0F8FF;
+  padding: 0;
+  border-radius: 5px;
+  font-size: .7em;
+  padding-left: 15px;
+}
+#picker {
+  width: 150px;
+  height: 100px;
+  position: absolute;
+  left: 20px;
+  top: 40px;
+}
+#slider {
+  width: 25px;
+  height: 100px;
+  position: absolute;
+  left: 175px;
+  top: 40px;
+}
+.YangPlayer-bulletScreen-mode {
+  left: 60px;
+  top: 1px;
+}
+.YangPlayer-mode-pane {
+  background-color: #eee;
+  width: 150px;
+  height: 150px;
+  position: absolute;
+  left: 10px;
+  bottom: 40px;
+  box-shadow: 0 0 5px #999;
+  visibility: hidden;
+  opacity: 0;
+  transition: all .5s linear;
+}
+.YangPlayer-font-size {
+  width: 100%;
+  height: 65px;
+}
+.YangPlayer-font-title,
+.YangPlayer-style-title {
+  width: 100%;
+  text-align: center;
+  line-height: 35px;
+  margin: 0;
+  font-size: .8em;
+}
+.YangPlayer-style-title {
+  margin-top: 10px;
+}
+.YangPlayer-font-small,
+.YangPlayer-font-middle,
+.YangPlayer-font-big {
+  float: left;
+  width: 30px;
+  line-height: 30px;
+  margin: 0 10px 0;
+  font-size: .7em;
+  text-align: center;
+  box-shadow: 0 0 5px #999;
+  opacity: .4;
+  background-color: #D7EEFF;
+}
+.YangPlayer-font-middle {
+  opacity: 1;
+}
+.YangPlayer-style-top,
+.YangPlayer-style-move {
+  margin: 0 0 0 7px;
+  text-align: center;
+  width: 65px;
+  font-size: .7em;
+  line-height: 25px;
+  float: left;
+  box-shadow: 0 0 5px #999;
+  opacity: .4;
+  background-color: #D7EEFF;
+}
+.YangPlayer-style-move {
+  opacity: 1;
+}
+.YangPlayer-bulletScreen-on {
+  left: 550px;
+  display: none;
+}
+.YangPlayer-bulletScreen-off {
+  left: 550px;
+}
+.YangPlayer-turnOff-light {
+  left: 590px;
 }
 .YangPlayer-play-circle,
 .YangPlayer-loading,

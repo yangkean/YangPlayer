@@ -13,5 +13,7 @@
   ],
   "homepage": "https://github.com/yangkean/YangPlayer",
   "private": true,
-  "dependencies": {}
+  "dependencies": {
+    "es6-shim": "^0.35.3"
+  }
 }
