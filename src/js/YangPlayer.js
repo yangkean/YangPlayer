@@ -29,35 +29,23 @@
       let browserName = browser.toLowerCase();
 
       // Opera 8.0+
-      let isOpera = () => {
-        return (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
-      };
+      let isOpera = () => (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
 
       // Firefox 1.0+
-      let isFirefox = () => {
-        return typeof InstallTrigger !== 'undefined';
-      };
+      let isFirefox = () => typeof InstallTrigger !== 'undefined';
 
       // Internet Explorer 6-11
-      let isIE = () => {
-        return /*@cc_on!@*/false || !!document.documentMode;
-      };
+      let isIE = () => /*@cc_on!@*/false || !!document.documentMode;
 
       // Edge 20+
-      let isEdge = () => {
-        return !isIE() && !!window.StyleMedia;
-      };
+      let isEdge = () => !isIE() && !!window.StyleMedia;
 
       // Chrome 1+
-      let isChrome = () => {
-        return !!window.chrome && !!window.chrome.webstore;
-      };
+      let isChrome = () => !!window.chrome && !!window.chrome.webstore;
 
       // Safari 3.0+
-      let isSafari = () => {
-        return (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0)
-               || (!isChrome() && !isOpera() && window.webkitAudioContext !== undefined);
-      };
+      let isSafari = () => (Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0)
+                     || (!isChrome() && !isOpera() && window.webkitAudioContext !== undefined);
 
       let browserObj = {
         opera: isOpera,
@@ -123,9 +111,8 @@
 
       let offsetX = coordinates.left;
       let offsetY = coordinates.top;
-      let parentElement = element.parentNode;
 
-      // parentElement.style.position = window.getComputedStyle(parentElement).position || 'relative';
+      // element.parentNode.style.position = window.getComputedStyle(element.parentNode).position || 'relative';
       // in this library, the above line doesn't need
       element.style.cssText += `position: absolute; left: ${offsetX}px; top: ${offsetY}px`;
     }
@@ -177,7 +164,7 @@
     }
 
     // in order to optimize performance, this method can offer `width`, `height`, `offsetLeft`, `offsetRight`,
-    // `offsetTop`, `parentWidth`, `parentHeight` of the element relative to its parent node at a time 
+    // `offsetTop`, `parentWidth`, `parentHeight` of the element relative to its parent node at a time
     // @param {[object HTMLElement]} element
     // @return {object} an object containing properties mentioned above
     static getOffsetAndLength(element) {
@@ -362,7 +349,7 @@
 
       if(YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
         YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
-      }   
+      }
     }
   }
 
@@ -983,8 +970,8 @@
         mouseMaxOffset: this.mouseYMax,
         dragBtn: this.volumeDragButton,
         slidebar: this.volumeBar,
-        mousedownCb: mousedownCb,
-        mousemoveCb: mousemoveCb,
+        mousedownCb,
+        mousemoveCb,
         context: this,
       };
 
@@ -1139,8 +1126,7 @@
       // the offsetWidth of video(controlsBar) is 0 when Safari 10 is in fullscreen mode, so choose to use `window.innerWidth` to get its width
       let controlsLength = (Utility.isWhichBrowser('Safari') && document.webkitIsFullScreen) ? window.innerWidth : Utility.outerWidth($('#YangPlayer'));
 
-      // controlsLength - (playBtnLength + timeBarLength + volumeBtnLength + screenModeLength + settingBtnLength + adjustingLength)
-      let progressLength = controlsLength - 316;
+      let progressLength = controlsLength - (playBtnLength + timeBarLength + volumeBtnLength + screenModeLength + settingBtnLength + offLightLength + adjustingLength);
 
       YangPlayer_GLOBAL.progressBar.progressBar.style.width = `${progressLength / controlsLength * 100}%`;
     }
@@ -1194,8 +1180,8 @@
         mouseMaxOffset: this.mouseXMax,
         dragBtn: this.progressDragButton,
         slidebar: this.progressBar,
-        mousemoveCb: mousemoveCb,
-        mouseupCb: mouseupCb,
+        mousemoveCb,
+        mouseupCb,
         mouseoutCb: mouseupCb,
         context: this,
       };
@@ -1319,7 +1305,7 @@
       };
 
       this.settingBtn.onmouseout = () => {
-        this.settingPane.style.cssText += 'opacity: 0; visibility: hidden;'
+        this.settingPane.style.cssText += 'opacity: 0; visibility: hidden;';
         this.settingBtn.style.backgroundColor = '#eee';
       };
     }
@@ -1609,8 +1595,8 @@
     // bottom control bar disappears when cursor isn's over it in fullscreen mode
     notOverControlBar() {
       this.controlBar.onmouseover = () => {
-          this.controlBar.style.opacity = 1;
-        };
+        this.controlBar.style.opacity = 1;
+      };
 
       this.controlBar.onmouseout = () => {
         this.controlBar.style.opacity = 0;
@@ -2024,7 +2010,6 @@
     // @param {string} mode - the mode type of `item`
     correctDistance(item, mode, userId) {
       let topModeNumber = 0;
-      let moveModeYAdd = false;
       let prevItem = null;
       let poolChildren = this.bulletScreenPool.children;
       let itemRect = Utility.getOffsetAndLength(item);
@@ -2041,7 +2026,7 @@
         if(otherMode === 'top') {
           topModeNumber++;
         }
-        else if(otherMode === 'move'){
+        else if(otherMode === 'move') {
           prevItem = poolChildren[j];
         }
       }
@@ -2093,11 +2078,8 @@
       let mode = data.mode;
       let color = data.color;
       let message = data.message;
-      let playTime = data.playTime;
       let item = document.createElement('div');
       let content = document.createTextNode(message);
-      let sameModeNumber = 0;
-      let poolChildren = this.bulletScreenPool.children;
 
       item.appendChild(content);
       item.style.cssText += `font-size: ${fontSize}; color: ${color}; border: 1px solid #fff; padding: 1px`;

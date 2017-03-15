@@ -33,19 +33,18 @@ gulp.task('clean', function() {
 });
 
 gulp.task('test:styles', function() {
-  return gulp.src('src/css/*.css')
+  return gulp.src('src/css/YangPlayer.css')
     .pipe(sourcemaps.init())
     .pipe(postcss(plugins))
     .pipe(rename(function(path) {
       path.basename += '.min';
     }))
-    .pipe(header(banner, {pkg: pkg}))
     .pipe(sourcemaps.write())
     .pipe(gulp.dest('dist/css'));
 });
 
 gulp.task('build:styles', function() {
-  return gulp.src('src/css/*.css')
+  return gulp.src('src/css/YangPlayer.css')
     .pipe(postcss(plugins))
     .pipe(rename(function(path) {
       path.basename += '.min';
@@ -63,10 +62,7 @@ gulp.task('test:scripts', function() {
       presets: ['es2015']
     }))
     .pipe(uglify())
-    .pipe(rename(function(path) {
-      path.basename += '.min';
-    }))
-    .pipe(header(banner, {pkg: pkg}))
+    .pipe(concat('YangPlayer.min.js'))
     .pipe(sourcemaps.write())
     .pipe(gulp.dest('dist/js'));
 });
@@ -79,7 +75,7 @@ gulp.task('build:scripts', function() {
     .pipe(uglify())
     .pipe(gulp.dest('dist/js'))
     .on('end', function() {
-      gulp.src(['components/colorpicker/colorpicker.min.js', 'components/es6-shim/es6-shim.min.js', 'dist/js/*.js'])
+      gulp.src(['dist/js/shadow-dom.js', 'components/colorpicker/colorpicker.min.js', 'components/es6-shim/es6-shim.min.js', 'dist/js/YangPlayer.js'])
         .pipe(concat('YangPlayer.min.js'))
         .pipe(uglify())
         .pipe(header(banner, {pkg: pkg}))
