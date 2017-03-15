@@ -1,6 +1,6 @@
 This project uses following plugins:
   [es6-shim](https://github.com/paulmillr/es6-shim),
-  [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker)
+  [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker) - modify `ColorPicker` function
 
 The MIT License (MIT)
 

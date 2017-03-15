@@ -1,3 +1,4 @@
+/* main body of video player start */
 .YangPlayer-container {
   width: 632px;
   height: 422px;
@@ -5,8 +6,8 @@
   margin: 0;
   padding: 0;
   position: absolute;
-  left: 300px;
-  top: 150px;
+  z-index: 2147483647 !important;
+  user-select: none;
 }
 .YangPlayer-container input:focus {
   outline: none;
@@ -24,15 +25,8 @@
   top: 0;
   z-index: 2147483647;
 }
-.YangPlayer-control-box {
-  width: 100%;
-  height: 30px;
-  visibility: visible;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 2147483647;
-}
+/* main body of video player end */
+/* control bar start */
 .YangPlayer-control {
   width: 100%;
   height: 30px;
@@ -41,8 +35,11 @@
   position: absolute;
   bottom: 0;
   left: 0;
+  transition: opacity .5s linear;
   z-index: 2147483647; /* avoiding the overriding of the user agent(Chrome)’s style sheet when Chrome enters fullscreen mode */
 }
+/* control bar end */
+/* control play button start */
 .YangPlayer-controlPlay-button { 
   display:inline-block;
   float: left;
@@ -60,10 +57,12 @@
 .YangPlayer-pause-button {
   display: none;
 }
+/* control play button end */
+/* progress bar start */
 .YangPlayer-progress {
   background-color: #ddd;
   border-radius: 5px;
-  width: 350px;
+  width: 0;
   height: 8px;
   display: inline-block;
   cursor: pointer;
@@ -74,7 +73,7 @@
 }
 .YangPlayer-playedbar {
   background-color: #09f;
-  display: none;
+  display: block;
   height: 8px;
   width: 0;
   border-top-left-radius: 5px;
@@ -87,7 +86,7 @@
 }
 .YangPlayer-bufferedbar {
   background-color: #ccc;
-  display: none;
+  display: block;
   height: 8px;
   width: 0;
   border-radius: 5px;
@@ -113,11 +112,13 @@
   line-height: 30px;
   font-size: .9em;
   color: #99a2aa;
-  margin-right: 5px;
+  margin-right: 2px;
   float: left;
   width: 136px;
   text-align: center;
 }
+/* progress bar end */
+/* volume button start */
 .YangPlayer-volume-button {
   display:inline-block;
   position: relative;
@@ -187,6 +188,8 @@
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
 }
+/* volume button end */
+/* setting button start */
 .YangPlayer-setting-button {
   width: 30px;
   vertical-align: middle;
@@ -249,11 +252,30 @@
   margin: 7px;
   float: left;
   box-shadow: 0 0 5px #999;
-  opacity: .4;
+  opacity: .5;
 }
-.YangPlayer-rate-10 {
-  opacity: 1;
+/* setting button end */
+/* off light button start */
+.YangPlayer-turnOff-light {
+  width: 30px;
+  vertical-align: middle;
+  text-align: center;
+  display: inline-block;
+  line-height: 30px;
+  margin-right: 5px;
+  cursor: pointer;
+  float: left;
 }
+.YangPlayer-offLight-layer {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background-color: #000;
+}
+/* off light button end */
+/* screen mode button start */
 .YangPlayer-screen-mode {
   display: inline-block;
   float: left;
@@ -270,16 +292,21 @@
 .YangPlayer-minscreen {
   display: none;
 }
+/* screen mode button end */
+/* bullet screen rect start */
 .YangPlayer-bullet-screen {
-  width: 100%;
+  width: 524px;
   height: 40px;
   visibility: visible;
   background-color: #eee;
   position: absolute;
-  bottom: -40px;
-  left: 0;
+  bottom: 40px;
+  left: 50%;
+  margin-left: -262px;
   z-index: 2147483647;
-  border-top: 1px solid #ddd;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity .5s linear;
 }
 .YangPlayer-bulletScreen-pool {
   width: 100%;
@@ -306,32 +333,26 @@
   word-break: keep-all;
 }
 .YangPlayer-bulletScreen-text {
-  width: 390px;
+  width: 69%;
   height: 26px;
   font-size: .9em;
   border: none;
-  padding: 0;
-  position: absolute;
-  left: 100px;
-  top: 7px;
-  padding-left: 10px;
+  padding: 0 0 0 10px;
+  float: left;
+  margin: 7px 0 0 10px;
 }
 .YangPlayer-bulletScreen-send,
 .YangPlayer-bulletScreen-color,
 .YangPlayer-bulletScreen-mode,
-.YangPlayer-bulletScreen-on,
-.YangPlayer-bulletScreen-off,
-.YangPlayer-turnOff-light {
-  position: absolute;
+.YangPlayer-bulletScreen-switch {
+  float: left;
+  text-align: center;
+  vertical-align: baseline;
+  width: 35px;
   line-height: 40px;
   cursor: pointer;
   color: #888;
-}
-.YangPlayer-bulletScreen-send {
-  left: 510px;
-}
-.YangPlayer-bulletScreen-color {
-  left: 20px;
+  position: relative;
 }
 .YangPlayer-color-box {
   opacity: 0;
@@ -391,10 +412,6 @@
   left: 175px;
   top: 40px;
 }
-.YangPlayer-bulletScreen-mode {
-  left: 60px;
-  top: 1px;
-}
 .YangPlayer-mode-pane {
   background-color: #eee;
   width: 150px;
@@ -432,11 +449,8 @@
   font-size: .7em;
   text-align: center;
   box-shadow: 0 0 5px #999;
-  opacity: .4;
+  opacity: .5;
   background-color: #D7EEFF;
-}
-.YangPlayer-font-middle {
-  opacity: 1;
 }
 .YangPlayer-style-top,
 .YangPlayer-style-move {
@@ -447,22 +461,14 @@
   line-height: 25px;
   float: left;
   box-shadow: 0 0 5px #999;
-  opacity: .4;
+  opacity: .5;
   background-color: #D7EEFF;
 }
-.YangPlayer-style-move {
-  opacity: 1;
-}
 .YangPlayer-bulletScreen-on {
-  left: 550px;
   display: none;
 }
-.YangPlayer-bulletScreen-off {
-  left: 550px;
-}
-.YangPlayer-turnOff-light {
-  left: 590px;
-}
+/* bullet screen rect end */
+/* buttons of displaying state start */
 .YangPlayer-play-circle,
 .YangPlayer-loading,
 .YangPlayer-replay {
@@ -502,13 +508,22 @@
   text-align: center;
   display: none;
 }
-.YangPlayer-share-btn {
-  color: #fff;
-  position: absolute;
-  top: 5px;
-  right: 25px;
-  opacity: .4;
-  z-index: 2147483647;
+/* buttons of displaying state end */
+/*
+ * the following styles are used to change the style
+ * of several elements 
+ */
+.YangPlayer-opacity-1 {
+  opacity: 1;
+}
+.YangPlayer-display-block {
+  display: block;
+}
+.YangPlayer-display-none {
+  display: none;
+}
+.YangPlayer-display-inlineB {
+  display: inline-block;
 }
 /* remove native controls when Chrome/Safari/Opera enters the fullscreen mode 
  * only use following style may not work in Safari when safari is in fullscreen mode
