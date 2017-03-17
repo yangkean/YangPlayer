@@ -1,6 +1,52 @@
-﻿# YangPlayer
-杨可安的专属视频播放器，致力于用 html5 的 API 实现基本的视频播放器功能，包括发送弹幕
+# YangPlayer
 
-这是播放器的 2.0 版本，1.0 版本荒废太久了，结构和代码有诸多不合理，所以用 ES6 和状态模式重构了下
+A cute HTML5 video player that can send [bullet screens](https://zh-cn.facebook.com/notes/the-sound-of-china/why-danmu-is-so-popular-in-china/1095179960504770/) (**in Chinese，弹幕**).
 
-持续更改中...
+## Screenshot
+
+![YangPlayer screenshot](http://static.zybuluo.com/SamYang/ebehh2pxrwv0nlf5axzisek0/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-03-18%2001.35.58.png)
+
+## Overview
+
+YangPlayer.js was written in pure [ECMAScript 6](http://www.ecma-international.org/ecma-262/6.0/) without JQuery and was based on
+[HTML5 video API](https://html.spec.whatwg.org/multipage/embedded-content.html#the-video-element). Source code was transpiled into
+[ECMAScript 5](http://www.ecma-international.org/ecma-262/5.1/) by [Babel](https://babeljs.io/) and took advantage of [es6-shim](https://github.com/paulmillr/es6-shim) to polyfill API of ECMAScript 6.
+
+## Features
+
+* support sending bullet screens, containing colorful、different-sized、top and moving bullet screens
+* support turn-off-light watching
+* support change playback rate
+* support Chinese and English
+
+## Getting started
+
+```html
+<!-- ... -->
+<head>
+<!-- ... -->
+<link href="https:\/\/cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"> <!-- Required -->
+<link rel="stylesheet" href="css/YangPlayer.min.css"> <!-- Required -->
+</head>
+<body>
+  <div class="YangPlayer-container"></div> <!-- Required -->
+  <script src="js/YangPlayer.min.js"></script> <!-- Required -->
+  <script>
+    // initial setting
+    let yangPlayer = new YangPlayer({
+      language: 'en', // optional, the language mode video player uses, `zh` or `en`, default: `zh`
+      bulletScreen: {
+        bulletSwitch: true, // optional, specify if open bullet screen functionality, `true` or `false`, default: `false`
+        url: 'http://localhost/~yangshao/bulletScreen.php' // the ajax address sent to, default: ''. If `switch` is `true`, this option is required
+      },
+      autoplay: false, // optional, specify if autoplay video at the beginning, `true` or `false`, default: `false`
+      video: {
+        url: 'http://clips.vorwaerts-gmbh.de/VfE_html5.mp4', // required, the video source url
+        posterUrl: '' // optional, the beginning poster url, default: ''
+      }
+    });
+  </script>
+</body>
+```
+## [License](https://github.com/yangkean/YangPlayer/blob/master/LICENSE)
+
