@@ -8,6 +8,7 @@
   position: absolute;
   z-index: 2147483647 !important;
   user-select: none;
+  font-family: Arial, "微软雅黑", "Microsoft YaHei", "华文细黑", STXihei;
 }
 .YangPlayer-container input:focus {
   outline: none;
@@ -207,12 +208,14 @@
   height: 150px;
   background-color: #eee;
   position: absolute;
-  right: -30px;
+  right: -60px;
   bottom: 30px;
   color: #888;
   box-shadow: 0 0 5px #999;
   visibility: hidden;
   transition: all .5s linear;
+  font-family: "Comic Sans MS", Verdana, Arial, "微软雅黑", "Microsoft YaHei", "华文细黑", STXihei;
+  font-weight: 600;
 }
 .YangPlayer-play-loop,
 .YangPlayer-play-auto {
@@ -323,6 +326,7 @@
   text-shadow: 1px 0 1px #000, 0 1px 1px #000, -1px 0 1px #000, 0 -1px 1px #000;
   top: 10px;
   line-height: 32px;
+  font-family: "Comic Sans MS", Verdana, Arial, "微软雅黑", "Microsoft YaHei", "华文细黑", STXihei;
 }
 .YangPlayer-bulletScreen-top {
   left: 50%;
@@ -340,6 +344,7 @@
   padding: 0 0 0 10px;
   float: left;
   margin: 7px 0 0 10px;
+  font-family: "Comic Sans MS", Verdana, Arial, "微软雅黑", "Microsoft YaHei", "华文细黑", STXihei;
 }
 .YangPlayer-bulletScreen-send,
 .YangPlayer-bulletScreen-color,
@@ -423,6 +428,7 @@
   visibility: hidden;
   opacity: 0;
   transition: all .5s linear;
+  font-family: "Comic Sans MS", Verdana, Arial, "微软雅黑", "Microsoft YaHei", "华文细黑", STXihei;
 }
 .YangPlayer-font-size {
   width: 100%;
@@ -434,7 +440,7 @@
   text-align: center;
   line-height: 35px;
   margin: 0;
-  font-size: .8em;
+  font-size: .7em;
 }
 .YangPlayer-style-title {
   margin-top: 10px;
@@ -443,9 +449,10 @@
 .YangPlayer-font-middle,
 .YangPlayer-font-big {
   float: left;
-  width: 30px;
+  width: 36px;
+  height: 30px;
   line-height: 30px;
-  margin: 0 10px 0;
+  margin: 0 7px 0;
   font-size: .7em;
   text-align: center;
   box-shadow: 0 0 5px #999;

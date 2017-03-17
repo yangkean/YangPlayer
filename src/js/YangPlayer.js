@@ -8,6 +8,8 @@
     progressBar: null, // {object} `new` from Class `ProgressBar`
     settingBtn: null, // {object} `new` from Class `SettingBtn`
     bulletScreen: null, // {object} `new` from Class `BulletScreen`
+    language: 'zh', // {string} the language video player uses, default: 'zh',
+    bulletScreenFunction: false,
   };
 
   // @param {string} selector - a CSS selector string
@@ -337,7 +339,7 @@
     buttonWasClicked() {
       this.classObject.pauseVideo();
 
-      if(YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
+      if(YangPlayer_GLOBAL.bulletScreenFunction && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
         YangPlayer_GLOBAL.bulletScreen.controlPauseBulletScreen();
       }
     }
@@ -347,7 +349,7 @@
     buttonWasClicked() {
       this.classObject.playVideo();
 
-      if(YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
+      if(YangPlayer_GLOBAL.bulletScreenFunction && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
         YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
       }
     }
@@ -363,9 +365,9 @@
         support: 4, // MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, the `media resource` indicated by the src attribute was not suitable
       };
       const ERROR_MESSAGE = {
-        network: '哎呀，网络好像出错了！\n刷新网页试一下:P',
-        decode: '咦，视频解码错误，\n这一定不是我的锅，\n换其他视频看看:）',
-        support: '天啦噜，视频不存在或者当前的浏览器不支持这个格式的视频:(，\n换其他视频看看',
+        network: YangPlayer_GLOBAL.language === 'en' ? 'NETWORK_FAILED!<br>Refresh the web page again :P' : '哎呀，网络好像出错了！刷新网页试一下:P',
+        decode: YangPlayer_GLOBAL.language === 'en' ? 'DECODING_ERR!<br>You can try another video :)' : '咦，视频解码错误，这一定不是我的锅，换其他视频看看:）',
+        support: YangPlayer_GLOBAL.language === 'en' ? 'NO_SOURCE_OR_SUPPORTED :(<br>You can try another video' : '天啦噜，视频不存在或者当前的浏览器不支持这个格式的视频，换其他视频看看:(',
       };
 
       super(classObject);
@@ -386,12 +388,12 @@
       this.classObject.forbidEventBinding();
       YangPlayer_GLOBAL.progressBar.forbidEventBinding();
       YangPlayer_GLOBAL.settingBtn.forbidEventBinding();
-      YangPlayer_GLOBAL.bulletScreen.forbidEventBinding();
+      YangPlayer_GLOBAL.bulletScreenFunction ? YangPlayer_GLOBAL.bulletScreen.forbidEventBinding() : '';
       this.classObject.setErrorSign();
       window.clearInterval(YangPlayer_GLOBAL.progressBar.intervalId);
       YangPlayer_GLOBAL.progressBar.intervalId = null;
-      window.clearInterval(YangPlayer_GLOBAL.bulletScreen.intervalId);
-      YangPlayer_GLOBAL.bulletScreen.intervalId = null;
+      YangPlayer_GLOBAL.bulletScreenFunction ? window.clearInterval(YangPlayer_GLOBAL.bulletScreen.intervalId) : '';
+      YangPlayer_GLOBAL.bulletScreenFunction ? (YangPlayer_GLOBAL.bulletScreen.intervalId = null) : '';
 
       for(let i in this.mediaErrorCode) {
         if(this.mediaErrorCode[i] === code) {
@@ -419,18 +421,18 @@
     // @param {number} code - network state code
     sourceState(code) {
       if(code === 3) {
-        let message = '哎呀，这个视频地址的资源好像不见了！\n刷新网页或者换其他视频看看';
+        let message = YangPlayer_GLOBAL.language === 'en' ? 'NO_SOURCE<br>Refresh the web page or try another video' : '哎呀，这个视频地址的资源好像不见了！刷新网页或者换其他视频看看';
 
         this.errDisplay.style.display = 'block';
         this.classObject.forbidEventBinding();
         YangPlayer_GLOBAL.progressBar.forbidEventBinding();
         YangPlayer_GLOBAL.settingBtn.forbidEventBinding();
-        YangPlayer_GLOBAL.bulletScreen.forbidEventBinding();
+        YangPlayer_GLOBAL.bulletScreenFunction ? YangPlayer_GLOBAL.bulletScreen.forbidEventBinding() : '';
         this.classObject.setErrorSign();
         window.clearInterval(YangPlayer_GLOBAL.progressBar.intervalId);
         YangPlayer_GLOBAL.progressBar.intervalId = null;
-        window.clearInterval(YangPlayer_GLOBAL.bulletScreen.intervalId);
-        YangPlayer_GLOBAL.bulletScreen.intervalId = null;
+        YangPlayer_GLOBAL.bulletScreenFunction ? window.clearInterval(YangPlayer_GLOBAL.bulletScreen.intervalId) : '';
+        YangPlayer_GLOBAL.bulletScreenFunction ? (YangPlayer_GLOBAL.bulletScreen.intervalId = null) : '';
         this.errDisplay.innerHTML = message;
       }
     }
@@ -457,7 +459,7 @@
         this.classObject.setLoadingSign();
 
         // pause bulletscreens when video player is in loading state
-        if(YangPlayer_GLOBAL.bulletScreenStatus) {
+        if(YangPlayer_GLOBAL.bulletScreenFunction && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
           YangPlayer_GLOBAL.bulletScreen.controlPauseBulletScreen();
         }
 
@@ -466,7 +468,7 @@
       if(code >= 3 && !this.classObject.player.paused) {
         this.classObject.playVideo();
 
-        if(YangPlayer_GLOBAL.bulletScreenStatus) {
+        if(YangPlayer_GLOBAL.bulletScreenFunction && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
           YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
         }
       }
@@ -759,7 +761,7 @@
       this.setState(this.pausingState);
 
       // pause bullet screens when replay button appear
-      if(YangPlayer_GLOBAL.bulletScreenStatus) {
+      if(YangPlayer_GLOBAL.bulletScreenFunction && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
         YangPlayer_GLOBAL.bulletScreen.controlPauseBulletScreen();
       }
     }
@@ -771,12 +773,14 @@
       this.playVideo();
 
       // remove bullet screens when press replay button
-      for(let userId in YangPlayer_GLOBAL.bulletScreen.userIdCollection) {
-        YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId].parentNode.removeChild(YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId]);
-        window.clearTimeout(YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId]);
+      if(YangPlayer_GLOBAL.bulletScreenFunction) {
+        for(let userId in YangPlayer_GLOBAL.bulletScreen.userIdCollection) {
+          YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId].parentNode.removeChild(YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId]);
+          window.clearTimeout(YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId]);
 
-        delete YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId];
-        delete YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId];
+          delete YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId];
+          delete YangPlayer_GLOBAL.bulletScreen.userIdCollection[userId];
+        }
       }
     }
 
@@ -1151,6 +1155,10 @@
       }
 
       let mousemoveCb = () => {
+        if(Number.isNaN(this.player.duration)) {
+          return;
+        }
+
         let progressDragBtnOffsetLeft = Utility.getOffsetLeft(this.progressDragButton);
         
         this.progressPlayedbar.style.width = `${progressDragBtnOffsetLeft / this.progressBarWidth * 100}%`;
@@ -1161,14 +1169,14 @@
         }
 
         // remove all bullet screens when mousedown and mousemove
-        YangPlayer_GLOBAL.bulletScreen.removeAllBulletScreen();
+        YangPlayer_GLOBAL.bulletScreenFunction ? YangPlayer_GLOBAL.bulletScreen.removeAllBulletScreen() : '';
 
         // change real currentTime
         this.player.currentTime = progressDragBtnOffsetLeft * this.player.duration / this.mouseXMax();
       };
 
       let mouseupCb = () => {
-        if(!YangPlayer_GLOBAL.bulletScreen.intervalId && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
+        if(YangPlayer_GLOBAL.bulletScreenFunction && !YangPlayer_GLOBAL.bulletScreen.intervalId && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
           YangPlayer_GLOBAL.bulletScreen.ifPauseBulletScreen = false;
           YangPlayer_GLOBAL.bulletScreen.intervalId = window.setInterval(YangPlayer_GLOBAL.bulletScreen.intervalFunc, 1000);
         }
@@ -1277,6 +1285,17 @@
     }
 
     init() {
+      if(YangPlayer_GLOBAL.language === 'en') {
+        $('.YangPlayer-loop-title').innerHTML = 'loop video';
+        $('.YangPlayer-auto-title').innerHTML = 'autoplay';
+        $('.YangPlayer-rate-title').innerHTML = 'playback rate';
+      }
+      else {
+        $('.YangPlayer-loop-title').innerHTML = '循环播放';
+        $('.YangPlayer-auto-title').innerHTML = '自动播放';
+        $('.YangPlayer-rate-title').innerHTML = '播放速率';
+      }
+
       this.setSwitchState(this.switchOffState, 'loop');
       this.setSwitchState(this.switchOffState, 'auto');
 
@@ -1352,7 +1371,7 @@
       if(this.player.paused) {
         YangPlayer_GLOBAL.controlPlay.playVideo();
 
-        if(YangPlayer_GLOBAL.bulletScreenStatus) {
+        if(YangPlayer_GLOBAL.bulletScreenFunction && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
           YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
         }
       }
@@ -1574,12 +1593,14 @@
 
           // correct bullet screens offset distance when the fullscreen state of the player changes
           // and own properties exist in `YangPlayer_GLOBAL.bulletScreen.userIdCollection`
-          for(let i in YangPlayer_GLOBAL.bulletScreen.userIdCollection) {
-            if(!this.player.paused && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
-              YangPlayer_GLOBAL.bulletScreen.ifPauseBulletScreen = true;
-              YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
+          if(YangPlayer_GLOBAL.bulletScreenFunction) {
+            for(let i in YangPlayer_GLOBAL.bulletScreen.userIdCollection) {
+              if(!this.player.paused && YangPlayer_GLOBAL.bulletScreen.bulletScreenStatus) {
+                YangPlayer_GLOBAL.bulletScreen.ifPauseBulletScreen = true;
+                YangPlayer_GLOBAL.bulletScreen.controlContinueBulletScreen();
 
-              break;
+                break;
+              }
             }
           }
 
@@ -1698,6 +1719,7 @@
         message: '',
         playTime: 0,
         date: '',
+        videoId: '',
       };
       this.timeoutIdCollection = {}; // store all timeout ids of `window.setTimeout()` that has not finished
       this.timeoutId = null; // store each timeout id
@@ -1709,6 +1731,27 @@
     }
 
     init(url) {
+      if(YangPlayer_GLOBAL.language === 'en') {
+        $('.YangPlayer-font-title').innerHTML = 'font size';
+        $('.YangPlayer-font-small').innerHTML = 'small';
+        $('.YangPlayer-font-middle').innerHTML = 'mid';
+        $('.YangPlayer-font-big').innerHTML = 'big';
+        $('.YangPlayer-style-title').innerHTML = 'bullet screen type';
+        $('.YangPlayer-style-top').innerHTML = 'top';
+        $('.YangPlayer-style-move').innerHTML = 'moving';
+        $('.YangPlayer-bulletScreen-text').placeholder = 'input bullet screens here...';
+      }
+      else {
+        $('.YangPlayer-font-title').innerHTML = '字体大小';
+        $('.YangPlayer-font-small').innerHTML = '小';
+        $('.YangPlayer-font-middle').innerHTML = '中';
+        $('.YangPlayer-font-big').innerHTML = '大';
+        $('.YangPlayer-style-title').innerHTML = '弹幕类型';
+        $('.YangPlayer-style-top').innerHTML = '顶部弹幕';
+        $('.YangPlayer-style-move').innerHTML = '滚动弹幕';
+        $('.YangPlayer-bulletScreen-text').placeholder = '这里输入弹幕...';
+      }
+
       // do not use `this.player.paused` at the beginning because before `oncanplaythrough`
       // event is triggered, `this.player.paused` is always `true`
       this.ifPauseBulletScreen = !this.player.autoplay;
@@ -2177,6 +2220,7 @@
     //        => {string} message - the message user inputed
     //        => {number} playTime - the player currentTime when user sent the message
     //        => {string} date - the date when user sent the message
+    //        => {string} [videoId] - distinguish different video
     // @return {object} a object containing following properties
     //        => {boolean} sendSuccess - `true` if ajax function successed, otherwise `false`
     //        => {array} bulletScreenContent - contain all bulletScreen objects. Each object contains following properties from above
@@ -2196,12 +2240,22 @@
         fd.append('playTime', data.playTime);
         fd.append('date', data.date);
 
+        if(data.videoId) {
+          fd.append('videoId', data.videoId);
+        }
+
         xhr.open('post', xhrUrl, true);
         xhr.send(fd);
       }
       else {
         xhr.open('get', xhrUrl, true);
-        xhr.send();
+
+        if(data.videoId) {
+          xhr.send(`videoId=${data.videoId}`);
+        }
+        else {
+          xhr.send();
+        }
       }
 
       xhr.onreadystatechange = () => {
@@ -2221,47 +2275,74 @@
 
   // main class of YangPlayer video player
   class YangPlayer {
-    constructor() {
-      // some important properties about YangPlayer video player
+    // @param {object} videoInfo - an object containing following properties
+    //        => {string} language - the language mode video player uses, `zh` or `en`, default: `zh`
+    //        => {object} bulletScreen - containing following properties about bulletScreen
+    //                => {boolean} switch - specify if open bullet screen functionality, `true` or `false`, default: `false`
+    //                => {string} url - the ajax address sent to, default: ''
+    //        => {boolean} autoplay - specify if autoplay video at the beginning, `true` or `false`, default: `false`
+    //        => {object} video - containing following properties about video
+    //                => {string} url - the video source url
+    //                => {string} posterUrl - the beginning poster url, default: ''
+    // @return {[object HTMLElement]} the video player Element
+    constructor(videoInfo) {
       this.YangPlayer = $('#YangPlayer');
-      this.controlPlay = null; // control video playing and pausing
-      this.progressBar = null; // the progress bar and its time bar
-      this.volumeButton = null; // the button controling volume in control bar
-      this.settingButton = null; // the button controling setting
-      this.screenMode = null; // the button controling fullscreen and minscreen
-      this.bulletScreen = null; // control sending `bullet screen`
-    }
 
-    init() {
-      // initialize control-play button and related loading img and pausing play-circle
-      this.controlPlay = new ControlPlay(this.YangPlayer);
-      this.controlPlay.init();
+      if(videoInfo.language === 'en') {
+        YangPlayer_GLOBAL.language = 'en';
+      }
 
-      // initialize progress bar
-      this.progressBar = new ProgressBar(this.YangPlayer);
-      this.progressBar.init();
+      const requiredClass = [
+        new ControlPlay(this.YangPlayer),
+        new ProgressBar(this.YangPlayer),
+        new Volume(this.YangPlayer),
+        new SettingBtn(this.YangPlayer),
+        new OffLight(),
+        new ScreenMode(this.YangPlayer),
+      ];
 
-      // initialize volume button
-      this.volumeButton = new Volume(this.YangPlayer);
-      this.volumeButton.init();
+      for(let i = 0; i < requiredClass.length; i++) {
+        requiredClass[i].init();
+      }
+      
+      if(videoInfo.bulletScreen.switch === true) {
+        if(!videoInfo.bulletScreen.url) {
+          throw new Error('the bullet screen url is not given!');
+        }
 
-      // initialize setting button
-      this.settingButton = new SettingBtn(this.YangPlayer);
-      this.settingButton.init();
+        YangPlayer_GLOBAL.bulletScreenFunction = true;
+        (new BulletScreen(this.YangPlayer)).init(videoInfo.bulletScreen.url);
+      }
+      else {
+        $('.YangPlayer-bullet-screen').parentNode.removeChild($('.YangPlayer-bullet-screen'));
+        $('.YangPlayer-bulletScreen-pool').parentNode.removeChild($('.YangPlayer-bulletScreen-pool'));
+      }
 
-      this.offLight = new OffLight();
-      this.offLight.init();
+      if(videoInfo.autoplay === true) {
+        YangPlayer_GLOBAL.settingBtn.autoState.buttonWasClicked('auto');
+      }
 
-      // initialize screen mode button
-      this.screenMode = new ScreenMode(this.YangPlayer);
-      this.screenMode.init();
+      if(!videoInfo.video.url) {
+        throw new Error('the video source url is not given!');
+      }
 
-      // initialize bullet screen rect
-      this.bulletScreen = new BulletScreen(this.YangPlayer);
-      this.bulletScreen.init('http://localhost/~yangshao/bulletScreen.php');
+      this.YangPlayer.src = videoInfo.video.url;
+
+      if(videoInfo.video.posterUrl) {
+        this.YangPlayer.poster = videoInfo.video.posterUrl;
+      }
+
+      return this.YangPlayer;
     }
   }
 
-  let player = new YangPlayer();
-  player.init();
+  class BuildPlayer {
+    constructor(obj) {
+      let player = new YangPlayer(obj);
+
+      return player;
+    }
+  }
+
+  window.YangPlayer = BuildPlayer;
 })();
