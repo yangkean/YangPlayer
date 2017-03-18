@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="author" content="Sam Yang">
+  <title>YangPlayer</title>
+  <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../dist/css/YangPlayer.min.css">
+  <style>
+    .YangPlayer-container {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      margin-left: -316px;
+      margin-top: -211px;
+    }
+  </style>
+</head>
+<body>
+  <div class="YangPlayer-container"></div>
+  <script src="../dist/js/YangPlayer.min.js"></script>
+  <script>
+    var yangPlayer = new YangPlayer({
+      language: 'zh',
+      bulletScreen: {
+        bulletSwitch: false,
+        url: ''
+      },
+      autoplay: false,
+      video: {
+        url: 'http://on0h7lwx1.bkt.clouddn.com/%E6%95%B0%E7%A0%81%E5%AE%9D%E8%B4%9D.mp4',
+        poster: ''
+      }
+    });
+  </script>
+</body>
+</html>

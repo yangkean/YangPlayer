@@ -4,33 +4,26 @@
   <meta charset="utf-8">
   <meta name="author" content="Sam Yang">
   <title>YangPlayer</title>
-  <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- build:css css/YangPlayer.min.css -->
-  <link rel="stylesheet" href="css/YangPlayer.css">
-  <!-- /build -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../src/css/YangPlayer.css">
 </head>
 <body>
   <div class="YangPlayer-container"></div>
-
-  <!-- build:remove -->
   <script src="../components/colorpicker/colorpicker.min.js"></script>
   <script src="../components/es6-shim/es6-shim.min.js"></script>
-  <script src="js/shadow-dom.js"></script>
-  <!-- /build -->
-  <!-- build:js js/YangPlayer.min.js -->
-  <script src="js/YangPlayer.js"></script>
-  <!-- /build -->
+  <script src="../src/js/shadow-dom.js"></script>
+  <script src="../src/js/YangPlayer.js"></script>
   <script>
     let yangPlayer = new YangPlayer({
-      language: 'en',
+      language: 'zh',
       bulletScreen: {
-        switch: false,
+        bulletSwitch: true,
         url: 'http://localhost/~yangshao/bulletScreen.php'
       },
       autoplay: false,
       video: {
         url: 'http://clips.vorwaerts-gmbh.de/VfE_html5.mp4',
-        poster: ''
+        posterUrl: ''
       }
     });
   </script>

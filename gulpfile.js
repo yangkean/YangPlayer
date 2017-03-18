@@ -9,7 +9,6 @@ const rename = require('gulp-rename');
 const del = require('del'); // delete files and folders
 const sourcemaps = require('gulp-sourcemaps');
 const eslint = require('gulp-eslint');
-const processhtml = require('gulp-processhtml');
 const babel = require('gulp-babel');
 const concat = require('gulp-concat'); // concatenates files
 const header = require('gulp-header'); // gulp extension to add header to file(s) in the pipeline
@@ -86,12 +85,6 @@ gulp.task('build:scripts', function() {
     });
 });
 
-gulp.task('html', function() {
-  return gulp.src('src/index.html')
-    .pipe(processhtml())
-    .pipe(gulp.dest('dist'));
-});
+gulp.task('test', ['test:styles', 'test:scripts']);
 
-gulp.task('test', ['test:styles', 'test:scripts', 'html']);
-
-gulp.task('build', ['build:styles', 'build:scripts', 'html']);
+gulp.task('build', ['build:styles', 'build:scripts']);

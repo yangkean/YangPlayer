@@ -2278,7 +2278,7 @@
     // @param {object} videoInfo - an object containing following properties
     //        => {string} language - the language mode video player uses, `zh` or `en`, default: `zh`
     //        => {object} bulletScreen - containing following properties about bulletScreen
-    //                => {boolean} switch - specify if open bullet screen functionality, `true` or `false`, default: `false`
+    //                => {boolean} bulletSwitch - specify if open bullet screen functionality, `true` or `false`, default: `false`
     //                => {string} url - the ajax address sent to, default: ''
     //        => {boolean} autoplay - specify if autoplay video at the beginning, `true` or `false`, default: `false`
     //        => {object} video - containing following properties about video
@@ -2305,7 +2305,7 @@
         requiredClass[i].init();
       }
       
-      if(videoInfo.bulletScreen.switch === true) {
+      if(videoInfo.bulletScreen.bulletSwitch === true) {
         if(!videoInfo.bulletScreen.url) {
           throw new Error('the bullet screen url is not given!');
         }

@@ -2,6 +2,8 @@
 
 A cute HTML5 video player that can send [bullet screens](https://zh-cn.facebook.com/notes/the-sound-of-china/why-danmu-is-so-popular-in-china/1095179960504770/) (**in Chinese，弹幕**).
 
+You can see [demo](https://yangkean.github.io/YangPlayer/demo/) here.
+
 ## Screenshot
 
 ![YangPlayer screenshot](http://static.zybuluo.com/SamYang/ebehh2pxrwv0nlf5axzisek0/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-03-18%2001.35.58.png)
@@ -18,6 +20,13 @@ YangPlayer.js was written in pure [ECMAScript 6](http://www.ecma-international.o
 * support turn-off-light watching
 * support change playback rate
 * support Chinese and English
+
+## Browser support
+
+* Chrome 48+
+* Firefox 44+
+* Safari 10+
+* Opera 43+
 
 ## Getting started
 
