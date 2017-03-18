@@ -34,7 +34,7 @@ YangPlayer.js was written in pure [ECMAScript 6](http://www.ecma-international.o
 <!-- ... -->
 <head>
 <!-- ... -->
-<link href="https:\/\/cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"> <!-- Required -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"> <!-- Required -->
 <link rel="stylesheet" href="css/YangPlayer.min.css"> <!-- Required -->
 </head>
 <body>
@@ -46,11 +46,11 @@ YangPlayer.js was written in pure [ECMAScript 6](http://www.ecma-international.o
       language: 'en', // optional, the language mode video player uses, `zh` or `en`, default: `zh`
       bulletScreen: {
         bulletSwitch: true, // optional, specify if open bullet screen functionality, `true` or `false`, default: `false`
-        url: 'http://localhost/~yangshao/bulletScreen.php' // the ajax address sent to, default: ''. If `switch` is `true`, this option is required
+        url: 'bulletScreen.php' // the ajax address sent to, default: ''. If `switch` is `true`, this option is required
       },
       autoplay: false, // optional, specify if autoplay video at the beginning, `true` or `false`, default: `false`
       video: {
-        url: 'http://clips.vorwaerts-gmbh.de/VfE_html5.mp4', // required, the video source url
+        url: 'apple.mp4', // required, the video source url
         posterUrl: '' // optional, the beginning poster url, default: ''
       }
     });
