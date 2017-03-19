@@ -57,5 +57,8 @@ YangPlayer.js was written in pure [ECMAScript 6](http://www.ecma-international.o
   </script>
 </body>
 ```
+
+If you neeed to open bullet screen functionality, see [PHP support](https://github.com/yangkean/YangPlayer/blob/master/phpSupport.md).
+
 ## [License](https://github.com/yangkean/YangPlayer/blob/master/LICENSE)
 

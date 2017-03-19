@@ -2305,7 +2305,7 @@
         requiredClass[i].init();
       }
       
-      if(videoInfo.bulletScreen.bulletSwitch === true) {
+      if(videoInfo.bulletScreen && videoInfo.bulletScreen.bulletSwitch === true) {
         if(!videoInfo.bulletScreen.url) {
           throw new Error('the bullet screen url is not given!');
         }
@@ -2322,13 +2322,13 @@
         YangPlayer_GLOBAL.settingBtn.autoState.buttonWasClicked('auto');
       }
 
-      if(!videoInfo.video.url) {
+      if(!videoInfo.video || (videoInfo.video && !videoInfo.video.url)) {
         throw new Error('the video source url is not given!');
       }
 
       this.YangPlayer.src = videoInfo.video.url;
 
-      if(videoInfo.video.posterUrl) {
+      if(videoInfo.video && videoInfo.video.posterUrl) {
         this.YangPlayer.poster = videoInfo.video.posterUrl;
       }
 
