@@ -6,7 +6,7 @@ You can see [demo](https://yangkean.github.io/YangPlayer/demo/) here.
 
 ## Screenshot
 
-![YangPlayer screenshot](http://static.zybuluo.com/SamYang/ebehh2pxrwv0nlf5axzisek0/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-03-18%2001.35.58.png)
+![YangPlayer screenshot](./player.png)
 
 ## Overview
 
