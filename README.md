@@ -62,3 +62,4 @@ If you neeed to open bullet screen functionality, see [PHP support](https://gith
 
 ## [License](https://github.com/yangkean/YangPlayer/blob/master/LICENSE)
 
+[粤ICP备15088974号](www.beian.miit.gov.cn)
